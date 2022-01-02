@@ -115,6 +115,17 @@ def transfer(userID, amount):
     return
 
 def friend(userID, friendID):
+    cursor.execute(''' SELECT username FROM users WHERE username=?''', (friendID))
+    if cursor.fetchone() == None:
+        print("Error: No account exists with " + friendID + " as its username.")
+        return
+    cursor.execute(''' SELECT friends FROM users WHERE username=?''', (userID))
+    if friendID in cursor.fetchone():
+        print("Error: You are already friends with" + friendID + ".")
+        return
+    currentFriends = cursor.execute(''' SELECT friends FROM users WHERE username=?''', (userID))
+    updatedFriends = currentFriends + friendID
+    cursor.execute(''' UPDATE users SET friends = ? WHERE username=? ''',(updatedFriends, userID))
     return
 
 def adduser(userID, accountType):
