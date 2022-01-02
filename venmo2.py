@@ -125,7 +125,7 @@ def friend(userID, friendID):
         print("Error: You are already friends with " + friendID + ".")
         return
     currentFriends = cursor.execute(''' SELECT friends FROM users WHERE username=?''', (userID))
-    updatedFriends = currentFriends + friendID
+    updatedFriends = currentFriends + "," + friendID
     cursor.execute(''' UPDATE users SET friends = ? WHERE username=? ''',(updatedFriends, userID))
     return
 
@@ -139,7 +139,7 @@ def adduser(userID, accountType):
         return
     cursor.execute(''' INSERT INTO users (username, friends, balance, accounttype, bank, privacy) 
     VALUES (?,?,?,?,?,?,?) '''
-    (userID, "", 0.0, accountType, "", ""))
+    (userID, None, 0.0, accountType, None, None))
     return
 
 def globallog(argv):
