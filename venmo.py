@@ -61,16 +61,21 @@ def pay(senderID,recipientID,amount,message,tag=None,privacy=None):
     #not much to check for the message
     senderprivacy = cursor.execute(''' SELECT privacy FROM users WHERE username=? ''', (senderID))
     recipientprivacy = cursor.execute(''' SELECT privacy FROM users WHERE username=? ''', (recipientID))
-    if senderprivacy or recipientprivacy == "Private":
-        privacy = "Private"
-    elif senderprivacy or recipientprivacy == "Friends Only":
-        privacy = "Friends Only"
-    elif senderprivacy == "Public" and recipientprivacy == "Public":
-        privacy = "Public"
-    else:
-        print("Error: Neither user has a default privacy setting and a privacy setting was not manually inputted.")
-        return
     
+    if privacy == None: 
+        if senderprivacy or recipientprivacy == "Private":
+            privacy = "Private"
+        elif senderprivacy or recipientprivacy == "Friends Only":
+            privacy = "Friends Only"
+        elif senderprivacy == "Public" and recipientprivacy == "Public":
+            privacy = "Public"
+        else:
+            print("Error: Neither user has a default privacy setting and a privacy setting was not manually inputted.")
+            return
+
+    if privacy != "Private" and privacy != "Friends Only" and privacy != "Public":
+        print("Error: Privacy input must be 'Privacy' or 'Friends Only' or 'Public' ")
+
     if tag != None and tag.lower().strip() not in tags:
         print("Error: Invalid tag.")
         return
@@ -86,6 +91,8 @@ def pay(senderID,recipientID,amount,message,tag=None,privacy=None):
     cursor.execute(''' INSERT INTO paymentLog (senderID, recipientID, amount, status, date, message, paymentID, privacy, tag, senderBalance, recipientBalance)
     VALUES (?,?,?,?,?,?,?,?,?,?,?) '''
     (senderID,recipientID,amount,"_payment",datetime.now(),message,paymentID,privacy,tag,senderBalance,recipientBalance))
+    return
+
 def request(userID, friendID,amount,message,tag=None):
 
 def unrequest(paymentID):
