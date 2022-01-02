@@ -6,19 +6,22 @@ tags = ["food", "groceries", "rent", "utilities", "sports", "fun", "transportati
 db = sqlite3.connect('venmo.db')
 cursor = db.cursor()
 cursor.execute('''CREATE TABLE IF NOT EXISTS paymentLog (senderID TEXT, recipientID TEXT, amount FLOAT, status TEXT, date DATETIME, message TEXT, paymentID TEXT, privacy TEXT, tag TEXT, senderBalance FLOAT, recipientBalance FLOAT)''')
-cursor.execute('''CREATE TABLE IF NOT EXISTS users (username TEXT, friends TEXT, balance FLOAT DEFAULT 0.0, accounttype TEXT, bank TEXT DEFAULT None, privacy TEXT DEFAULT None)''')
+cursor.execute('''CREATE TABLE IF NOT EXISTS users (username TEXT, friends TEXT DEFAULT "*", balance FLOAT DEFAULT 0.0, accounttype TEXT, bank TEXT DEFAULT None, privacy TEXT DEFAULT None)''')
 
 def init(argv,cursor):
     if len(argv) == 1:
         print("Please enter a command.")
+        return
     else:
         if argv[1] == "pay":
             if len(argv) == 6:
-                pay(argv[2],argv[3],argv[4],argv[5])
+                pay(argv[2],argv[3],argv[4],argv[5],cursor)
             elif len(argv) == 7:
-                pay(argv[2],argv[3],argv[4],argv[5],argv[6])
+                pay(argv[2],argv[3],argv[4],argv[5],cursor,argv[6])
             elif len(argv) == 8:
-                pay(argv[2],argv[3],argv[4],argv[5],argv[6],argv[7])
+                pay(argv[2],argv[3],argv[4],argv[5],cursor,argv[6],argv[7])
+            else:
+                print("Usage: python3 venmo.py pay senderID recipientID amount message [tag] [privacy]")
             return
         if argv[1] == "request":
             request()
