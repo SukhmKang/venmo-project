@@ -59,9 +59,17 @@ def pay(senderID,recipientID,amount,message,tag=None,privacy=None):
         return
     #error checking: need to check if amount is a numerical value or not
     #not much to check for the message
+    senderfriends = str(cursor.execute(''' SELECT friends FROM users WHERE username=?''',(senderID)))
+    if len(senderfriends) == 0:
+        print("Error: Recipient is not in sender's friends list.")
+        return
+    elif senderID not in senderfriends.split(","):
+        print("Error: Recipient is not in sender's friends list.")    
+        return
+
     senderprivacy = cursor.execute(''' SELECT privacy FROM users WHERE username=? ''', (senderID))
     recipientprivacy = cursor.execute(''' SELECT privacy FROM users WHERE username=? ''', (recipientID))
-    
+
     if privacy == None: 
         if senderprivacy or recipientprivacy == "Private":
             privacy = "Private"
@@ -74,7 +82,8 @@ def pay(senderID,recipientID,amount,message,tag=None,privacy=None):
             return
 
     if privacy != "Private" and privacy != "Friends Only" and privacy != "Public":
-        print("Error: Privacy input must be 'Privacy' or 'Friends Only' or 'Public' ")
+        print("Error: Privacy input must be 'Privacy' or 'Friends Only' or 'Public'.")
+        return
 
     if tag != None and tag.lower().strip() not in tags:
         print("Error: Invalid tag.")
@@ -88,6 +97,8 @@ def pay(senderID,recipientID,amount,message,tag=None,privacy=None):
     paymentID = hash(str(senderID)+str(recipientID)+str(message)+str(datetime.now()))
     senderBalance = float(cursor.execute(''' SELECT balance FROM users WHERE username=? ''', (senderID))) - float(amount)
     recipientBalance = float(cursor.execute(''' SELECT balance FROM users WHERE username=? ''', (recipientID))) - float(amount)
+    cursor.execute(''' UPDATE users SET balance = ? WHERE username=? ''',(senderBalance,senderID))
+    cursor.execute(''' UPDATE users SET balance = ? WHERE username=? ''',(recipientBalance,recipientID))
     cursor.execute(''' INSERT INTO paymentLog (senderID, recipientID, amount, status, date, message, paymentID, privacy, tag, senderBalance, recipientBalance)
     VALUES (?,?,?,?,?,?,?,?,?,?,?) '''
     (senderID,recipientID,amount,"_payment",datetime.now(),message,paymentID,privacy,tag,senderBalance,recipientBalance))
