@@ -27,7 +27,8 @@ else:
     if sys.argv[1] == "transfer":
         transfer()
     if sys.argv[1] == "friend":
-        friend()
+        if len(sys.argv) == 4:
+            friend(sys.argv[2], sys.argv[3])
     if sys.argv[1] == "adduser":
         if len(sys.argv) == 4:
             adduser(sys.argv[2], sys.argv[3])
@@ -121,7 +122,7 @@ def friend(userID, friendID):
         return
     cursor.execute(''' SELECT friends FROM users WHERE username=?''', (userID))
     if friendID in cursor.fetchone():
-        print("Error: You are already friends with" + friendID + ".")
+        print("Error: You are already friends with " + friendID + ".")
         return
     currentFriends = cursor.execute(''' SELECT friends FROM users WHERE username=?''', (userID))
     updatedFriends = currentFriends + friendID
