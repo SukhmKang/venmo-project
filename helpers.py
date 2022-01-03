@@ -1,14 +1,6 @@
 from datetime import datetime
 tags = ["food", "groceries", "rent", "utilities", "sports", "fun", "transportation", "drinks", "business", "tickets", "gift", "gas"]
 cmds = ["pay","linkbank","override","request","transfer","deposit"]
-verificationtimes = dict.fromkeys(cmds)
-verificationtimes["request"] = 120
-verificationtimes["pay"] = 120
-verificationtimes["linkbank"] = 60
-verificationtimes["override"] = 60
-verificationtimes["transfer"] = 90
-verificationtimes["deposit"] = 90
-
 
 def fetch(fetchone):
     return str(''.join(fetchone))
@@ -182,7 +174,7 @@ def linkbank(userID, bankID, cursor):
         print("You must verify your account before linking a bank account.")
         return
 
-    if not verifiedtime(userID,verificationtimes["linkbank"],cursor):
+    if not verifiedtime(userID,60,cursor):
         print(f"Error: To link your bank you must verify your account in the past 60 days.")
         return
 
@@ -207,7 +199,7 @@ def override(userID, password, bankID, cursor):
     if not passwordchecker(userID,password,cursor):
         return
     
-    if not verifiedtime(userID,verificationtimes["override"],cursor):
+    if not verifiedtime(userID,60,cursor):
         print(f"Error: To override your bank you must verify your account in the past 60 days.")
         return
 
@@ -219,12 +211,41 @@ def override(userID, password, bankID, cursor):
         cursor.execute( ''' UPDATE users SET bank=? WHERE username=?''',(bankID,userID))
 
 def request(userID, friendID,amount,message,cursor,tag=None):
+    #checks if user exists
     if not validateuser(userID,cursor):
-        print("Verification failed.")
         return
-    if not verifiedtime(userID,verificationtimes["transfer"],cursor):
-        print(f"Error: To transfer you must verify your account in the past 90 days.")
+    
+    #checks if friendID exists
+    cursor.execute(''' SELECT username FROM users WHERE username=?''', (friendID,))
+    if cursor.fetchone() == None:
+        print("Error: No account exists with " + friendID + " as its username.")
         return
+
+    #checks if user has verified in the past 120 days
+    if not verifiedtime(userID,120,cursor):
+        print(f"Error: To request you must verify your account in the past 120 days.")
+        return
+    
+    #checks if amount is a number
+    try:
+        amount = float(amount)
+        if amount <= 0:
+            print("Error: You cannot request 0 or negative dollars.")
+            return
+    except ValueError:
+        print("Error: Did not input a numerical payment amount.")
+        return
+
+    #checks if you are friends with friendID
+    if not friendchecker(userID,friendID,cursor):
+        return
+
+    #generates requestID
+    requestID = hash(str(userID)+str(friendID)+str(message)+str(datetime.now()))
+
+    cursor.execute(''' INSERT INTO paymentLog (senderID, recipientID, amount, status, date, message, paymentID, privacy, tag, senderBalance, recipientBalance)
+    VALUES (?,?,?,?,?,?,?,?,?,?,?) ''',(friendID,userID,amount,"request",datetime.now(),message,requestID,None,tag,None,None))
+
     return
 
 def unrequest(paymentID):
@@ -234,7 +255,7 @@ def deposit(userID, amount, cursor):
     if not validateuser(userID,cursor):
         return
     
-    if not verifiedtime(userID,verificationtimes["deposit"],cursor):
+    if not verifiedtime(userID,90,cursor):
         print(f"Error: To deposit you must verify your account in the past 90 days.")
         return
     
@@ -287,7 +308,7 @@ def transfer(userID, amount, type, cursor):
         print("Verification failed.")
         return
 
-    if not verifiedtime(userID,verificationtimes["transfer"],cursor):
+    if not verifiedtime(userID,90,cursor):
         print(f"Error: To transfer you must verify your account in the past 90 days.")
         return
 
@@ -344,6 +365,8 @@ def checkpassword(password):
         print(f"{errormessage}======")
     return False not in checks
 
+def setprivacy():
+    return
 
 def adduser(userID, password, accountType,cursor):
     if str(accountType.lower()) != "personal" and str(accountType.lower()) != "business":
