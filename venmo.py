@@ -1,12 +1,13 @@
 import sqlite3
 import sys
-from helpers import pay, request, unrequest, deposit, transfer, friend, adduser, globallog, friendlog, personallog, transactionslog, requestlog, viewprofile
+from datetime import datetime
+from helpers import pay, request, unrequest, deposit, transfer, friend, adduser, globallog, friendlog, personallog, transactionslog, requestlog, viewprofile, linkbank, override, verify, verifiedtime
 
 tags = ["food", "groceries", "rent", "utilities", "sports", "fun", "transportation", "drinks", "business", "tickets", "gift", "gas"]
 db = sqlite3.connect('venmo.db')
 cursor = db.cursor()
 cursor.execute('''CREATE TABLE IF NOT EXISTS paymentLog (senderID TEXT, recipientID TEXT, amount FLOAT, status TEXT, date DATETIME, message TEXT, paymentID TEXT, privacy TEXT, tag TEXT, senderBalance FLOAT, recipientBalance FLOAT)''')
-cursor.execute('''CREATE TABLE IF NOT EXISTS users (username TEXT, friends TEXT DEFAULT "*", balance FLOAT DEFAULT 0.0, accounttype TEXT, bank TEXT DEFAULT None, privacy TEXT DEFAULT None)''')
+cursor.execute('''CREATE TABLE IF NOT EXISTS users (username TEXT, password TEXT, friends TEXT DEFAULT "*", balance FLOAT DEFAULT 0.0, accounttype TEXT, bank TEXT DEFAULT "*", privacy TEXT DEFAULT "*", verification DATETIME DEFAULT "0001-01-01 00:00:00", ssn TEXT DEFAULT "*") ''')
 
 def init(argv,cursor):
     if len(argv) == 1:
@@ -30,7 +31,9 @@ def init(argv,cursor):
             unrequest()
             return
         if argv[1] == "deposit":
-            deposit()
+            #deposit userID amount
+            if len(argv) == 4:
+                deposit(argv[2],argv[3],cursor)
             return
         if argv[1] == "transfer":
             transfer()
@@ -40,9 +43,27 @@ def init(argv,cursor):
                 friend(argv[2], argv[3], cursor)
             return
         if argv[1] == "adduser":
-            if len(argv) == 4:
-                adduser(argv[2], argv[3],cursor)
+            #adduser userID password accounttype
+            if len(argv) == 5:
+                adduser(argv[2],argv[3],argv[4],cursor)
             return
+        if argv[1] == "linkBank":
+            #linkBank userID bankID
+            if len(argv) == 4:
+                linkbank(argv[2],argv[3],cursor)
+            return
+        if argv[1] == "override":
+            #override userID password bankID
+            if len(argv) == 5:
+                override(argv[2],argv[3],argv[4],cursor)
+            return
+        if argv[1] == "verify":
+            #verify userID password SSN
+            if len(argv) == 5:
+                verify(argv[2],argv[3],argv[4],cursor)
+                return
+        if argv[1] == "setPrivacy":
+            setprivacy()
         if argv[1] == "globallog":
             globallog()
             return
