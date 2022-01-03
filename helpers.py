@@ -1,7 +1,27 @@
 from datetime import datetime
 tags = ["food", "groceries", "rent", "utilities", "sports", "fun", "transportation", "drinks", "business", "tickets", "gift", "gas"]
+cmds = ["pay","linkbank","override","request","transfer","deposit"]
+verificationtimes = dict.fromkeys(cmds)
+verificationtimes["request"] = 120
+verificationtimes["pay"] = 120
+verificationtimes["linkbank"] = 60
+verificationtimes["override"] = 60
+verificationtimes["transfer"] = 90
+verificationtimes["deposit"] = 90
 
 
+def fetch(fetchone):
+    return str(''.join(fetchone))
+
+def isverified(userID,cursor):
+    cursor.execute(''' SELECT ssn FROM users WHERE username=?''',(userID,))
+    ssn = fetch(cursor.fetchone())
+    if ssn == "*":
+        print("Error: User is not verified.")
+        return False
+    return True
+
+#Checks if user inputs correct password
 def passwordchecker(userID,password,cursor):
     cursor.execute( ''' SELECT password FROM users WHERE username=?''',(userID,))
     correctpassword = str(''.join(cursor.fetchone()))
@@ -10,13 +30,14 @@ def passwordchecker(userID,password,cursor):
         return False
     return True
 
-
+#Accesses current user balance
 def getbalance(userID,cursor):
     cursor.execute(''' SELECT balance FROM users WHERE username=? ''', (userID,))
     userBalance = str(cursor.fetchone()).replace("(","").replace(")","").replace(",","")
     userBalance = float(userBalance)
     return userBalance
 
+#checks if a user currently exists
 def validateuser(userID,cursor):
     cursor.execute(''' SELECT username FROM users WHERE username=?''', (userID,))
     if cursor.fetchone() == None:
@@ -24,6 +45,7 @@ def validateuser(userID,cursor):
         return False
     return True
 
+#checks if user has verified account in given time period
 def verifiedtime(userID,days,cursor):
     if not validateuser(userID,cursor):
         return
@@ -40,6 +62,7 @@ def verifiedtime(userID,days,cursor):
         daydifference += character
     return int(daydifference) < days
 
+#Checks if user has friended another user and/or if the other user has friended them back
 def friendchecker(senderID,recipientID,cursor):
     cursor.execute(''' SELECT friends FROM users WHERE username=?''',(senderID,))
     senderFriends = ''.join(cursor.fetchone())
@@ -53,7 +76,7 @@ def friendchecker(senderID,recipientID,cursor):
         return False
     return True
 
-
+#Sends payment from one user to another
 def pay(senderID,recipientID,amount,message,cursor,tag=None,privacy=None):
     cursor.execute(''' SELECT username FROM users WHERE username=?''', (senderID,))
     if cursor.fetchone() == None:
@@ -63,7 +86,10 @@ def pay(senderID,recipientID,amount,message,cursor,tag=None,privacy=None):
     if cursor.fetchone() == None:
         print("Error: Recipient not in system.")
         return
-    
+    if not verifiedtime(senderID,120,cursor):
+        print(f"Error: To complete a payment you must verify your account in the past 120 days.")
+        return
+
     #error checking: need to check if amount is a numerical value or not
     try:
         amount = float(amount)
@@ -133,6 +159,7 @@ def pay(senderID,recipientID,amount,message,cursor,tag=None,privacy=None):
     cursor.execute(''' UPDATE users SET balance = ? WHERE username=? ''',(recipientBalance,recipientID))
     cursor.execute(''' INSERT INTO paymentLog (senderID, recipientID, amount, status, date, message, paymentID, privacy, tag, senderBalance, recipientBalance)
     VALUES (?,?,?,?,?,?,?,?,?,?,?) ''',(senderID,recipientID,amount,"_payment",datetime.now(),message,paymentID,privacy,tag,senderBalance,recipientBalance))
+    print(f"Successfuly paid {recipientID} ${amount}")
 
 def bankcheck(bankID):
     check = len(bankID) == 9 and bankID.isnumeric()
@@ -150,6 +177,15 @@ def ssncheck(SSN):
 def linkbank(userID, bankID, cursor):
     if not validateuser(userID,cursor):
         return
+    
+    if not isverified(userID,cursor):
+        print("You must verify your account before linking a bank account.")
+        return
+
+    if not verifiedtime(userID,verificationtimes["linkbank"],cursor):
+        print(f"Error: To link your bank you must verify your account in the past 60 days.")
+        return
+
     cursor.execute(''' SELECT bank FROM users WHERE username=?''', (userID,))
     bankcode = str(''.join(cursor.fetchone()))
 
@@ -165,22 +201,30 @@ def linkbank(userID, bankID, cursor):
     if bankcheck(bankID):
         cursor.execute( ''' UPDATE users SET bank=? WHERE username=?''',(bankID,userID))
 
-
-
 def override(userID, password, bankID, cursor):
     if not validateuser(userID,cursor):
         return
     if not passwordchecker(userID,password,cursor):
         return
+    
+    if not verifiedtime(userID,verificationtimes["override"],cursor):
+        print(f"Error: To override your bank you must verify your account in the past 60 days.")
+        return
+
     cursor.execute( ''' SELECT bank FROM users WHERE username=?''',(userID,))
     oldbank = str(''.join(cursor.fetchone()))
     if bankID == oldbank:
         print("Error: Attempting to override with the same ID.")
     if bankcheck(bankID):
         cursor.execute( ''' UPDATE users SET bank=? WHERE username=?''',(bankID,userID))
-    
 
-def request(userID, friendID,amount,message,tag=None):
+def request(userID, friendID,amount,message,cursor,tag=None):
+    if not validateuser(userID,cursor):
+        print("Verification failed.")
+        return
+    if not verifiedtime(userID,verificationtimes["transfer"],cursor):
+        print(f"Error: To transfer you must verify your account in the past 90 days.")
+        return
     return
 
 def unrequest(paymentID):
@@ -189,6 +233,11 @@ def unrequest(paymentID):
 def deposit(userID, amount, cursor):
     if not validateuser(userID,cursor):
         return
+    
+    if not verifiedtime(userID,verificationtimes["deposit"],cursor):
+        print(f"Error: To deposit you must verify your account in the past 90 days.")
+        return
+    
     try:
         amount = float(amount)
         if amount <= 0:
@@ -233,6 +282,16 @@ def verify(userID,password,SSN,cursor):
         print("Verification failed. SSN incorrect ")
 
 def transfer(userID, amount, type, cursor):
+
+    if not validateuser(userID,cursor):
+        print("Verification failed.")
+        return
+
+    if not verifiedtime(userID,verificationtimes["transfer"],cursor):
+        print(f"Error: To transfer you must verify your account in the past 90 days.")
+        return
+
+
     return
 
 def friend(userID, friendID, cursor):
