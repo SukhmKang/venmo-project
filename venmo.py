@@ -39,7 +39,7 @@ def init(argv,cursor):
                 acceptrequest(argv[2],argv[3],cursor)
                 return
             if len(argv) == 5:
-                acceptrequest(argv[2],argv[3],cursor,argv[5])
+                acceptrequest(argv[2],argv[3],cursor,argv[4])
                 return
         if argv[1] == "unrequest":
             #unrequest userID paymentID
@@ -130,7 +130,16 @@ def init(argv,cursor):
             return
         print("Please enter a valid command.")
 
+
+with open ("commands.txt","r") as commands:
+    for line in commands:
+        stripped_line = line.strip()
+        stripped_line = stripped_line.split(",")
+        init(stripped_line,cursor)
+
 init(sys.argv,cursor)
+
+
 
 db.commit()
 db.close()

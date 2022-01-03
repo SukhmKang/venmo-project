@@ -78,6 +78,10 @@ def pay(senderID,recipientID,amount,message,cursor,tag=None,privacy=None):
     if cursor.fetchone() == None:
         print("Error: Recipient not in system.")
         return False
+    if senderID==recipientID:
+        print("Error: You can't pay yourself!")
+        return False
+
     if not verifiedtime(senderID,120,cursor):
         print(f"Error: To complete a payment you must verify your account in the past 120 days.")
         return False
@@ -222,6 +226,10 @@ def override(userID, password, bankID, cursor):
 def request(userID, friendID,amount,message,cursor,tag=None):
     #checks if user exists
     if not validateuser(userID,cursor):
+        return
+    
+    if userID == friendID:
+        print("Error: You can't request yourself!")
         return
     
     #checks if friendID exists
@@ -400,7 +408,7 @@ def deposit(userID, amount, cursor):
     try:
         amount = float(amount)
         if amount <= 0:
-            print("Error: You cannot deposit a negative amount of money into your Venmo.")
+            print("Error: You cannot deposit zero dollars or a negative amount of money into your Venmo.")
             return
     except ValueError:
         print("Error: Did not input a numerical amount.")
@@ -503,6 +511,10 @@ def transfer(userID, amount, cursor, type="no fee"):
 
 def friend(userID, friendID, cursor):
     if not validateuser(userID,cursor):
+        return
+
+    if userID == friendID:
+        print("Error: You cannot friend yourself!")
         return
 
     cursor.execute(''' SELECT username FROM users WHERE username=?''', (friendID,))
@@ -709,7 +721,6 @@ def transactionprivacy(userID,paymentID,newprivacy,cursor):
     if (privacy == "Friends Only" and newprivacy == "Private") or (privacy == "Public"):
         cursor.execute(''' UPDATE paymentLog SET privacy=? WHERE paymentID=?''',(newprivacy,paymentID))
         print(f"Privacy for Payment {paymentID} converted from {privacy} to {newprivacy}.")
-    
     return
 
 def globallog(argv):
