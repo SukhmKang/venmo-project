@@ -1,7 +1,7 @@
 import sqlite3
 import sys
 from datetime import datetime
-from helpers import pay, request, unrequest, deposit, transfer, friend, adduser, globallog, friendlog, personallog, transactionslog, requestlog, viewprofile, linkbank, override, verify, verifiedtime
+from helpers import pay, request, unrequest, deposit, transfer, friend, adduser, globallog, friendlog, personallog, transactionslog, requestlog, viewprofile, linkbank, override, verify, setprivacy
 
 tags = ["food", "groceries", "rent", "utilities", "sports", "fun", "transportation", "drinks", "business", "tickets", "gift", "gas"]
 db = sqlite3.connect('venmo.db')
@@ -25,7 +25,11 @@ def init(argv,cursor):
                 print("Usage: python3 venmo.py pay senderID recipientID amount message [tag] [privacy]")
             return
         if argv[1] == "request":
-            request()
+            #request userID friendID amount message [tag]
+            if len(argv) == 6:
+                request(argv[2],argv[3],argv[4],argv[5],cursor)
+            if len(argv) == 7:
+                request(argv[2],argv[3],argv[4],argv[5],cursor,argv[6])
             return
         if argv[1] == "unrequest":
             unrequest()
