@@ -1,7 +1,7 @@
 import sqlite3
 import sys
 from datetime import datetime
-from helpers import pay, request, unrequest, deposit, transfer, friend, adduser, globallog, friendlog, personallog, transactionslog, requestlog, viewprofile, linkbank, override, verify, setprivacy, unfriend
+from helpers import pay, request, unrequest, deposit, transfer, friend, adduser, globallog, friendlog, personallog, transactionslog, requestlog, viewprofile, linkbank, override, verify, setprivacy, unfriend, acceptrequest, denyrequest, updateprivacy
 
 tags = ["food", "groceries", "rent", "utilities", "sports", "fun", "transportation", "drinks", "business", "tickets", "gift", "gas"]
 db = sqlite3.connect('venmo.db')
@@ -28,12 +28,29 @@ def init(argv,cursor):
             #request userID friendID amount message [tag]
             if len(argv) == 6:
                 request(argv[2],argv[3],argv[4],argv[5],cursor)
-            if len(argv) == 7:
+            elif len(argv) == 7:
                 request(argv[2],argv[3],argv[4],argv[5],cursor,argv[6])
+            else:
+                print("Usage: python3 venmo.py request userID friendID amount message [tag]")
             return
+        if argv[1] == "acceptRequest":
+            #acceptRequest senderID paymentID [privacy]
+            if len(argv) == 4:
+                acceptrequest(argv[2],argv[3],cursor)
+                return
+            if len(argv) == 5:
+                acceptrequest(argv[2],argv[3],cursor,argv[5])
+                return
         if argv[1] == "unrequest":
-            unrequest()
-            return
+            #unrequest userID paymentID
+            if len(argv) == 4:
+                unrequest(argv[2],argv[3],cursor)
+                return
+        if argv[1] == "denyRequest":
+            #denyRequest senderID paymentID
+            if len(argv) == 4:
+                denyrequest(argv[2],argv[3],cursor)
+                return
         if argv[1] == "deposit":
             #deposit userID amount
             if len(argv) == 4:
@@ -67,11 +84,17 @@ def init(argv,cursor):
                 verify(argv[2],argv[3],argv[4],cursor)
                 return
         if argv[1] == "unfriend":
+            #unfriend userID friendID 
             if len(argv) == 4:
                 unfriend(argv[2],argv[3],cursor)
             return
         if argv[1] == "setPrivacy":
-            setprivacy()
+            if len(argv) == 4:
+                setprivacy(argv[2],argv[3],cursor)
+            return
+        if argv[1] == "updatePrivacy":
+            if len(argv) == 5:
+                updateprivacy(argv[2],argv[3],arg[4], cursor)
         if argv[1] == "globallog":
             globallog()
             return
