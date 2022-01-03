@@ -98,20 +98,25 @@ def pay(senderID,recipientID,amount,message,cursor,tag=None,privacy=None):
 
     cursor.execute(''' SELECT privacy FROM users WHERE username=? ''', (senderID,))
     senderprivacy = ''.join(cursor.fetchone())
+    print(senderprivacy)
     cursor.execute(''' SELECT privacy FROM users WHERE username=? ''', (recipientID,))
     recipientprivacy = ''.join(cursor.fetchone())
+    print(recipientprivacy)
+    print(privacy)
 
     if privacy == None: 
-        if senderprivacy or recipientprivacy == "Private":
+        if senderprivacy == "Private" or recipientprivacy == "Private":
+            print(recipientprivacy)
+            print(senderprivacy)
             privacy = "Private"
-        elif senderprivacy or recipientprivacy == "Friends Only":
+        elif senderprivacy == "Friends Only" or recipientprivacy == "Friends Only":
             privacy = "Friends Only"
         elif senderprivacy == "Public" and recipientprivacy == "Public":
             privacy = "Public"
         else:
             print("Error: Neither user has a default privacy setting and a privacy setting was not manually inputted.")
             return False
-            # fix this later
+            
     elif privacy.lower() == "private":
         privacy = "Private"
     elif privacy.lower() == "friends only":
@@ -126,10 +131,9 @@ def pay(senderID,recipientID,amount,message,cursor,tag=None,privacy=None):
             privacy = "Friends Only"
         else:
             privacy = "Public"
-
-    if privacy.lower() != "private" and privacy.lower() != "friends Only" and privacy.lower() != "public":
-        print("Error: Privacy input must be 'Privacy' or 'Friends Only' or 'Public'.")
-        return False
+    else:
+            print("======\nError: Invalid privacy setting.\nNote: Privacy options include:\nPrivate\nFriends Only\nPublic\n======")
+            return False
 
     if tag != None and tag.lower().strip() not in tags:
         print(f"Error: Invalid tag. Valid tags are:\n {tags}")
@@ -162,9 +166,10 @@ def bankcheck(bankID):
     return check
 
 def privacycheck(privacy):
-    check = privacy.lower() == "private" or privacy.lower() == "friends Only" or privacy.lower() == "public"
+    check = (privacy.lower() == "private") or (privacy.lower() == "friends only") or (privacy.lower() == "public")
     if not check:
         print("======\nError: Invalid privacy setting.\nNote: Privacy options include:\nPrivate\nFriends Only\nPublic\n======")
+    return check
 
 def ssncheck(SSN):
     SSN = SSN.replace("-","").replace(" ","")
@@ -549,12 +554,36 @@ def setprivacy(userID, privacy, cursor):
     cursor.execute(''' SELECT privacy FROM users WHERE username=?''', (userID,))
     currPrivacy = fetch(cursor.fetchone())
 
-    if privacycheck(privacy):
+    if privacy.lower() == "private":
+        privacy = "Private"
+    if privacy.lower() == "public":
+        privacy = "Public"
+    if privacy.lower() == "friends only":
+        privacy = "Friends Only"
+
+    if not privacycheck(privacy):
         return
 
     if privacy == currPrivacy:
         print(f"Error: Your privacy settings are already {privacy} ")
         return
+
+    if currPrivacy != "*":
+        print(f"Warning: This action will override your current setting: {currPrivacy}. To proceed, use updatePrivacy.\nUsage: updatePrivacy userID password privacy")
+        return
+    
+    cursor.execute( ''' UPDATE users SET privacy=? WHERE username=?''',(privacy,userID))
+    
+
+def updateprivacy(userID, password, privacy, cursor):
+    if not validateuser(userID,cursor):
+        return
+    
+    if not passwordchecker(userID,password,cursor):
+        return
+    
+    cursor.execute( ''' SELECT privacy FROM users WHERE username=?''',(userID,))
+    oldPrivacy = fetch(cursor.fetchone())
 
     if privacy.lower() == "private":
         privacy = "Private"
@@ -562,16 +591,16 @@ def setprivacy(userID, privacy, cursor):
         privacy = "Public"
     if privacy.lower() == "friends only":
         privacy = "Friends Only"
-    
-    if currPrivacy != "*":
-        print(f"Warning: This action will override your current setting: {currPrivacy}. To proceed, use updatePrivacy.\nUsage: updatePrivacy userID password privacy")
+
+    if not privacycheck(privacy):
+        return
+
+    if privacy == oldPrivacy:
+        print(f"Error: Attempting to override with the same privacy setting: {oldPrivacy}.")
         return
 
     cursor.execute( ''' UPDATE users SET privacy=? WHERE username=?''',(privacy,userID))
-    
-
-def updateprivacy(userID, password, privacy, cursor):
-    return
+    print(f"Success! Your privacy settings have been changed to: {privacy}.")
 
 def adduser(userID, password, accountType,cursor):
     if str(accountType.lower()) != "personal" and str(accountType.lower()) != "business":
