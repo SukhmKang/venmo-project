@@ -73,28 +73,28 @@ def pay(senderID,recipientID,amount,message,cursor,tag=None,privacy=None):
     cursor.execute(''' SELECT username FROM users WHERE username=?''', (senderID,))
     if cursor.fetchone() == None:
         print("Error: Sender not in system.")
-        return
+        return False
     cursor.execute(''' SELECT username FROM users WHERE username =?''', (recipientID,))
     if cursor.fetchone() == None:
         print("Error: Recipient not in system.")
-        return
+        return False
     if not verifiedtime(senderID,120,cursor):
         print(f"Error: To complete a payment you must verify your account in the past 120 days.")
-        return
+        return False
 
     #error checking: need to check if amount is a numerical value or not
     try:
         amount = float(amount)
         if amount <= 0:
             print("Error: You cannot pay someone 0 or negative dollars.")
-            return
+            return False
     except ValueError:
         print("Error: Did not input a numerical payment amount.")
-        return
+        return False
 
     #checks if you are friends
     if not friendchecker(senderID,recipientID,cursor):
-        return
+        return False
 
     cursor.execute(''' SELECT privacy FROM users WHERE username=? ''', (senderID,))
     senderprivacy = ''.join(cursor.fetchone())
@@ -110,7 +110,7 @@ def pay(senderID,recipientID,amount,message,cursor,tag=None,privacy=None):
             privacy = "Public"
         else:
             print("Error: Neither user has a default privacy setting and a privacy setting was not manually inputted.")
-            return
+            return False
     elif privacy.lower() == "private":
         privacy = "Private"
     elif privacy.lower() == "friends only":
@@ -128,18 +128,18 @@ def pay(senderID,recipientID,amount,message,cursor,tag=None,privacy=None):
 
     if privacy.lower() != "private" and privacy.lower() != "friends Only" and privacy.lower() != "public":
         print("Error: Privacy input must be 'Privacy' or 'Friends Only' or 'Public'.")
-        return
+        return False
 
     if tag != None and tag.lower().strip() not in tags:
         print(f"Error: Invalid tag. Valid tags are:\n {tags}")
-        return
+        return False
     
     senderBalance = getbalance(senderID, cursor)
     recipientBalance = getbalance(recipientID, cursor)
 
     if amount > senderBalance:
         print("Error: Sender does not have enough money in account.")
-        return
+        return False
 
     # hashing function to generate payment ID
     paymentID = hash(str(senderID)+str(recipientID)+str(message)+str(datetime.now()))
@@ -152,6 +152,7 @@ def pay(senderID,recipientID,amount,message,cursor,tag=None,privacy=None):
     cursor.execute(''' INSERT INTO paymentLog (senderID, recipientID, amount, status, date, message, paymentID, privacy, tag, senderBalance, recipientBalance)
     VALUES (?,?,?,?,?,?,?,?,?,?,?) ''',(senderID,recipientID,amount,"_payment",datetime.now(),message,paymentID,privacy,tag,senderBalance,recipientBalance))
     print(f"Successfuly paid {recipientID} ${amount}")
+    return True
 
 def bankcheck(bankID):
     check = len(bankID) == 9 and bankID.isnumeric()
@@ -248,8 +249,137 @@ def request(userID, friendID,amount,message,cursor,tag=None):
 
     return
 
-def unrequest(paymentID):
-    return
+def acceptrequest(senderID,paymentID,cursor,privacy=None):
+    #making sure sender is in the system
+    if not validateuser(senderID,cursor):
+        return
+    #making sure the user has active incoming requests
+    hasactiverequests = False
+    cursor.execute(''' SELECT paymentID FROM paymentLog WHERE status=? AND senderID=?''',("request",senderID))
+    if cursor.fetchone():
+        hasactiverequests = True
+
+    cursor.execute(''' SELECT status FROM paymentLog WHERE paymentID=? AND senderID=?''',(paymentID,senderID))
+    try:
+        request_status = fetch(cursor.fetchone())
+        if request_status == "cancelled_request":
+            print("Error: This request was already cancelled.")
+            return
+        elif request_status =="denied_request":
+            print("Error: You already denied this request.")
+            return
+        elif request_status =="accepted_request":
+            print("Error: You already accepted this request.")
+            return
+        elif request_status =="_payment":
+            print("Error: This payment ID corresponds to a payment, not a request.")
+            return
+        elif request_status == "*payment":
+            print("Error: This payment ID corresponds to a transfer, not a request.")
+            return
+    except TypeError:
+        if hasactiverequests:
+            print("Error: Request ID is incorrect.")
+            return
+        print("Error: User has no requests.")
+        return
+
+    #storing the person who sent the request as recipientID
+    cursor.execute(''' SELECT recipientID FROM paymentLog WHERE paymentID=? AND senderID=?''',(paymentID,senderID))
+    recipientID = fetch(cursor.fetchone())
+    #making sure recipient still exists in the userbase
+    cursor.execute(''' SELECT username FROM users WHERE username LIKE ? ''',(recipientID,))
+    if cursor.fetchone() == None:
+        print("Error: The user who requested you no longer exists.")
+        return
+    #making sure sender and recipient are still friends
+    if not friendchecker(senderID,recipientID,cursor):
+        print("Note: In order to accept a request, you must be friends with the recipient at time of acceptance.")
+        return
+    
+    #get the amount and message from the request
+    cursor.execute(''' SELECT amount FROM paymentLog WHERE paymentID=? AND senderID=?''',(paymentID,senderID))
+    amount = float(str(cursor.fetchone()).replace("(","").replace(")","").replace(",",""))
+    cursor.execute(''' SELECT message FROM paymentLog WHERE paymentID=? AND senderID=?''',(paymentID,senderID))
+    message = fetch(cursor.fetchone())
+    cursor.execute(''' SELECT tag FROM paymentLog WHERE paymentID=? AND senderID=?''',(paymentID,senderID))
+    #gets the tag (if exists) and pays the recipient the requested amount and logs the transaction and updates the request log too
+    try:
+        tag = fetch(cursor.fetchone())
+        if pay(senderID, recipientID, amount, message, cursor, tag, privacy):
+            cursor.execute(''' UPDATE paymentLog SET status=? WHERE paymentID=? AND senderID=? ''',("accepted_request",paymentID,senderID))
+    except TypeError:
+        if pay(senderID, recipientID, amount, message, cursor, None, privacy):
+            cursor.execute(''' UPDATE paymentLog SET status=? WHERE paymentID=? AND senderID=? ''',("accepted_request",paymentID,senderID))
+
+def unrequest(recipientID,paymentID,cursor):
+    #making sure user exists
+    if not validateuser(recipientID,cursor):
+        return
+    #making sure the user has outgoing active requests
+    hasactiverequests = False
+    cursor.execute(''' SELECT paymentID FROM paymentLog WHERE status=? AND recipientID=?''',("request",recipientID))
+    if cursor.fetchone():
+        hasactiverequests = True
+    
+    #checking status of the specified request
+    cursor.execute(''' SELECT status FROM paymentLog WHERE paymentID=? AND recipientID=?''',(paymentID,recipientID))
+    try:
+        request_status = fetch(cursor.fetchone())
+        if request_status == "request":
+            cursor.execute(''' UPDATE paymentLog SET status =? WHERE paymentID=? AND recipientID=?''',("cancelled_request",paymentID,recipientID))
+            print("Request successfully cancelled.")
+        elif request_status == "cancelled_request":
+            print("Error: User already cancelled this request.")
+        elif request_status == "denied_request":
+            print("Error: This request was already denied.")
+        elif request_status == "accepted_request":
+            print("Error: This request was already accepted.")
+        elif request_status =="_payment":
+            print("Error: This payment ID corresponds to a payment, not a request.")
+            return
+        elif request_status == "*payment":
+            print("Error: This payment ID corresponds to a transfer, not a request.")
+            return
+
+    except TypeError:
+        if hasactiverequests:
+            print("Error: Payment ID is incorrect.")
+            return
+        print("Error: User has no active outgoing requests.")
+
+def denyrequest(senderID,paymentID,cursor):
+    if not validateuser(senderID,cursor):
+        return
+    #making sure the sender has incoming requests in his/her name
+    hasactiverequests = False
+    cursor.execute(''' SELECT paymentID FROM paymentLog WHERE status=? AND senderID=?''',("request",senderID))
+    if cursor.fetchone():
+        hasactiverequests = True
+
+    cursor.execute(''' SELECT status FROM paymentLog WHERE paymentID=? AND senderID=?''',(paymentID,senderID))
+    try:
+        request_status = fetch(cursor.fetchone())
+        if request_status == "request":
+            cursor.execute(''' UPDATE paymentLog SET status =? WHERE paymentID=? AND senderID=?''',("denied_request",paymentID,senderID))
+            print("Request denied for request ID {paymentID}.")
+        elif request_status == "cancelled_request":
+            print("Error: This request was already cancelled.")
+        elif request_status =="denied_request":
+            print("Error: You already denied this request.")
+        elif request_status =="accepted_request":
+            print("Error: You already accepted this request.")
+        elif request_status =="_payment":
+            print("Error: This payment ID corresponds to a payment, not a request.")
+            return
+        elif request_status == "*payment":
+            print("Error: This payment ID corresponds to a transfer, not a request.")
+            return
+    except TypeError:
+        if hasactiverequests:
+            print("Error: Payment ID is incorrect.")
+            return
+        print("Error: User has no requests.")
 
 def deposit(userID, amount, cursor):
     if not validateuser(userID,cursor):
@@ -303,7 +433,6 @@ def verify(userID,password,SSN,cursor):
         print("Verification failed. SSN incorrect ")
 
 def transfer(userID, amount, type, cursor):
-
     if not validateuser(userID,cursor):
         print("Verification failed.")
         return
@@ -312,11 +441,9 @@ def transfer(userID, amount, type, cursor):
         print(f"Error: To transfer you must verify your account in the past 90 days.")
         return
 
-
     return
 
 def friend(userID, friendID, cursor):
-
     if not validateuser(userID,cursor):
         return
 
@@ -339,7 +466,51 @@ def friend(userID, friendID, cursor):
         updatedFriends = friendID
 
     cursor.execute(''' UPDATE users SET friends = ? WHERE username=? ''',(updatedFriends, userID))
+    print(f"{userID} added {friendID} as a friend!")
     return
+
+def unfriend(userID, friendID, cursor):
+    #common checks for user and friend
+    if not validateuser(userID,cursor):
+        return
+
+    cursor.execute(''' SELECT username FROM users WHERE username=?''', (friendID,))
+    if cursor.fetchone() == None:
+        print("Error: No account exists with " + friendID + " as its username.")
+        return
+
+    cursor.execute(''' SELECT friends FROM users WHERE username=?''', (userID,))
+    currentFriends = ''.join(cursor.fetchone())
+    if friendID not in currentFriends:
+        print("Error: You are not friends with " + friendID + ".")
+        return
+
+    #string manipulation of user's friends (removing the unfriended username from the friends string)
+    indexSubstring = currentFriends.find(friendID)
+    lenFriendID = len(friendID)
+    updatedFriends = ""
+
+    #friendID is user's only friend
+    if len(currentFriends) == lenFriendID:
+        updatedFriends = "*"
+    #friendID is user's first (but not only) friend
+    elif indexSubstring == 0:
+        updatedFriends = currentFriends[lenFriendID + 1:]
+    #friendID is user's most recent friend
+    elif indexSubstring + lenFriendID == len(currentFriends):
+        updatedFriends = currentFriends[0:len(currentFriends)-(lenFriendID + 1)]
+    #friendID is neither the first or the latest friend (somewhere in the middle of the friends string)
+    else:
+        updatedFriends = currentFriends[0: indexSubstring] + currentFriends[indexSubstring + lenFriendID + 1:]
+    
+    #updating the friends string in the users database
+    cursor.execute(''' UPDATE users SET friends = ? WHERE username=? ''',(updatedFriends, userID))
+
+    #calling unfriend for friendID (this action is forced by userID's unfriend command) 
+    cursor.execute(''' SELECT friends FROM users WHERE username=?''', (friendID,))
+    friendsFriends = ''.join(cursor.fetchone())
+    if userID in friendsFriends:
+        unfriend(friendID, userID, cursor)
 
 def checkpassword(password):
     checks = [False,False,False,False]
