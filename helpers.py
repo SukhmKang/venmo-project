@@ -102,15 +102,16 @@ def pay(senderID,recipientID,amount,message,cursor,tag=None,privacy=None):
     recipientprivacy = ''.join(cursor.fetchone())
 
     if privacy == None: 
-        if senderprivacy or recipientprivacy == "Private":
+        if senderprivacy == "Private" or recipientprivacy == "Private":
             privacy = "Private"
-        elif senderprivacy or recipientprivacy == "Friends Only":
+        elif senderprivacy == "Friends Only" or recipientprivacy == "Friends Only":
             privacy = "Friends Only"
-        elif senderprivacy == "Public" and recipientprivacy == "Public":
+        elif senderprivacy == "Public" or recipientprivacy == "Public":
             privacy = "Public"
         else:
             print("Error: Neither user has a default privacy setting and a privacy setting was not manually inputted.")
             return False
+            
     elif privacy.lower() == "private":
         privacy = "Private"
     elif privacy.lower() == "friends only":
@@ -125,10 +126,9 @@ def pay(senderID,recipientID,amount,message,cursor,tag=None,privacy=None):
             privacy = "Friends Only"
         else:
             privacy = "Public"
-
-    if privacy.lower() != "private" and privacy.lower() != "friends Only" and privacy.lower() != "public":
-        print("Error: Privacy input must be 'Privacy' or 'Friends Only' or 'Public'.")
-        return False
+    else:
+            print("======\nError: Invalid privacy setting.\nNote: Privacy options include:\nPrivate\nFriends Only\nPublic\n======")
+            return False
 
     if tag != None and tag.lower().strip() not in tags:
         print(f"Error: Invalid tag. Valid tags are:\n {tags}")
@@ -158,6 +158,12 @@ def bankcheck(bankID):
     check = len(bankID) == 9 and bankID.isnumeric()
     if not check:
         print("Error: Bank routing number is not valid.\nNote: Routing numbers must contain exactly 9 numerical digits.")
+    return check
+
+def privacycheck(privacy):
+    check = (privacy.lower() == "private") or (privacy.lower() == "friends only") or (privacy.lower() == "public")
+    if not check:
+        print("======\nError: Invalid privacy setting.\nNote: Privacy options include:\nPrivate\nFriends Only\nPublic\n======")
     return check
 
 def ssncheck(SSN):
@@ -193,6 +199,8 @@ def linkbank(userID, bankID, cursor):
 
     if bankcheck(bankID):
         cursor.execute( ''' UPDATE users SET bank=? WHERE username=?''',(bankID,userID))
+    
+    print(f"Bank {bankID} successfully linked!")
 
 def override(userID, password, bankID, cursor):
     if not validateuser(userID,cursor):
@@ -432,14 +440,64 @@ def verify(userID,password,SSN,cursor):
     else:
         print("Verification failed. SSN incorrect ")
 
-def transfer(userID, amount, type, cursor):
+def balance(userID, password, cursor):
+    if not validateuser(userID,cursor):
+        return
+    if not passwordchecker(userID,password,cursor):
+        return
+    print(f"Your balance is: ${getbalance(userID,cursor)}.")
+
+def transfer(userID, amount, cursor, type="no fee"):
     if not validateuser(userID,cursor):
         print("Verification failed.")
         return
-
     if not verifiedtime(userID,90,cursor):
         print(f"Error: To transfer you must verify your account in the past 90 days.")
         return
+    cursor.execute(''' SELECT bank FROM users WHERE username=?''',(userID,))
+    userBank = fetch(cursor.fetchone())
+    if userBank == "*":
+        print("Error: User must set up bank account before transferring.")
+        return
+    #error checking: need to check if amount is a numerical value or not
+    try:
+        amount = float(amount)
+        if amount <= 0:
+            print("Error: You cannot pay someone 0 or negative dollars.")
+            return False
+    except ValueError:
+        print("Error: Did not input a numerical payment amount.")
+        return False
+    #fee calculation step
+    if type.lower() == "instant":
+        fee = round(min((0.015 * amount),15),2)
+        type = "Instant Transfer"
+    elif type.lower()=="no fee":
+        fee = 0
+        type = "No Fee Transfer"
+    else:
+        print("Error: Please enter a valid transfer type:\nTransfer types include:\n•Instant\n•No Fee")
+        return
+    
+    userBalance = getbalance(userID,cursor)
+    userBalance = userBalance - amount
+    if userBalance < 0:
+        print(f"You cannot transfer more than you have in your account. Current balance: {userBalance + amount}.")
+        return
+    #Updating users and paymentLog
+    cursor.execute(''' UPDATE users SET balance=? WHERE username=?''',(userBalance,userID))
+    cursor.execute(''' UPDATE users SET fees=fees+? WHERE username=?''',(fee,userID))
+    cursor.execute(''' ''')
+    
+    #generating transfer ID
+    transferID = hash(str(userID)+str(userBank)+str(type)+str(datetime.now()))
+    print(f"${amount} transferred to Bank: {userBank}. Your new balance is ${userBalance}.")
+    if fee > 0:
+        print(f"Your fee for this transfer was: ${fee}")
+
+    cursor.execute(''' INSERT INTO paymentLog (senderID, recipientID, amount, status, date, message, paymentID, privacy, tag, senderBalance, recipientBalance)
+    VALUES (?,?,?,?,?,?,?,?,?,?,?) ''',(userID,userBank,amount,"transfer",datetime.now(),type,transferID,None,None,None,None))
+
 
     return
 
@@ -536,13 +594,69 @@ def checkpassword(password):
         print(f"{errormessage}======")
     return False not in checks
 
-def setprivacy():
-    return
+def setprivacy(userID, privacy, cursor):
+    if not validateuser(userID,cursor):
+        return
+
+    cursor.execute(''' SELECT privacy FROM users WHERE username=?''', (userID,))
+    currPrivacy = fetch(cursor.fetchone())
+
+    if privacy.lower() == "private":
+        privacy = "Private"
+    if privacy.lower() == "public":
+        privacy = "Public"
+    if privacy.lower() == "friends only":
+        privacy = "Friends Only"
+
+    if not privacycheck(privacy):
+        return
+
+    if privacy == currPrivacy:
+        print(f"Error: Your privacy settings are already {privacy} ")
+        return
+
+    if currPrivacy != "*":
+        print(f"Warning: This action will override your current setting: {currPrivacy}. To proceed, use updatePrivacy.\nUsage: updatePrivacy userID password privacy")
+        return
+    
+    cursor.execute( ''' UPDATE users SET privacy=? WHERE username=?''',(privacy,userID))
+    
+
+def updateprivacy(userID, password, privacy, cursor):
+    if not validateuser(userID,cursor):
+        return
+    
+    if not passwordchecker(userID,password,cursor):
+        return
+    
+    cursor.execute( ''' SELECT privacy FROM users WHERE username=?''',(userID,))
+    oldPrivacy = fetch(cursor.fetchone())
+
+    if privacy.lower() == "private":
+        privacy = "Private"
+    if privacy.lower() == "public":
+        privacy = "Public"
+    if privacy.lower() == "friends only":
+        privacy = "Friends Only"
+
+    if not privacycheck(privacy):
+        return
+
+    if privacy == oldPrivacy:
+        print(f"Error: Attempting to override with the same privacy setting: {oldPrivacy}.")
+        return
+
+    cursor.execute( ''' UPDATE users SET privacy=? WHERE username=?''',(privacy,userID))
+    print(f"Success! Your privacy settings have been changed to: {privacy}.")
 
 def adduser(userID, password, accountType,cursor):
     if str(accountType.lower()) != "personal" and str(accountType.lower()) != "business":
         print("Error: Invalid account type.")
         return
+    if accountType.lower() == "personal":
+        accountType = "Personal"
+    else:
+        accountType = "Business"
     cursor.execute(''' SELECT username FROM users WHERE username LIKE ?''', (userID,))
     if cursor.fetchone():
         print("Error: Account with that username already exists.")
@@ -554,6 +668,48 @@ def adduser(userID, password, accountType,cursor):
     cursor.execute(''' INSERT INTO users (username, friends, balance, accounttype, password) 
     VALUES (?,?,?,?,?) ''',
     (userID, "*", 0.0, accountType, password))
+    return
+
+def validatepayment(paymentID,cursor):
+    cursor.execute(''' SELECT paymentID FROM paymentLog WHERE paymentID=?''',(paymentID,))
+    if cursor.fetchone():
+        return True
+    else:
+        print("Error: A payment with this ID does not exist.")
+        return False
+
+def transactionprivacy(userID,paymentID,newprivacy,cursor):
+    if not validateuser(userID,cursor):
+        return
+    if not validatepayment(paymentID,cursor):
+        return
+    cursor.execute(''' SELECT senderID FROM paymentLog WHERE paymentID =? ''',(paymentID,))
+    sender = fetch(cursor.fetchone())
+    cursor.execute(''' SELECT recipientID FROM paymentLog WHERE paymentID =? ''',(paymentID,))
+    recipient = fetch(cursor.fetchone())
+    if userID != sender and userID != recipient:
+        print(f"Error: {userID} was not involved in this payment.")
+        return
+    cursor.execute(''' SELECT privacy FROM paymentLog WHERE paymentID=?''',(paymentID,))
+    privacy = fetch(cursor.fetchone())
+    if newprivacy.lower() == "private":
+        newprivacy = "Private"
+    if newprivacy.lower() == "public":
+        newprivacy = "Public"
+    if newprivacy.lower() == "friends only":
+        newprivacy = "Friends Only"
+    if not privacycheck(newprivacy):
+        return
+    if newprivacy == privacy:
+        print(f"Error: Payment privacy is already {privacy}.")
+        return
+    if (privacy == "Private") or (privacy == "Friends Only" and newprivacy == "Public"):
+        print(f"Error: Since Transaction {paymentID} is {privacy}, it cannot be changed to {newprivacy}.")
+        return
+    if (privacy == "Friends Only" and newprivacy == "Private") or (privacy == "Public"):
+        cursor.execute(''' UPDATE paymentLog SET privacy=? WHERE paymentID=?''',(newprivacy,paymentID))
+        print(f"Privacy for Payment {paymentID} converted from {privacy} to {newprivacy}.")
+    
     return
 
 def globallog(argv):

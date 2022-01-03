@@ -1,13 +1,13 @@
 import sqlite3
 import sys
 from datetime import datetime
-from helpers import pay, request, unrequest, deposit, transfer, friend, adduser, globallog, friendlog, personallog, transactionslog, requestlog, viewprofile, linkbank, override, verify, setprivacy, unfriend, acceptrequest, denyrequest
+from helpers import pay, request, unrequest, deposit, transfer, friend, adduser, globallog, friendlog, personallog, transactionslog, requestlog, viewprofile, linkbank, override, verify, setprivacy, unfriend, acceptrequest, denyrequest, updateprivacy, transactionprivacy, balance
 
 tags = ["food", "groceries", "rent", "utilities", "sports", "fun", "transportation", "drinks", "business", "tickets", "gift", "gas"]
 db = sqlite3.connect('venmo.db')
 cursor = db.cursor()
 cursor.execute('''CREATE TABLE IF NOT EXISTS paymentLog (senderID TEXT, recipientID TEXT, amount FLOAT, status TEXT, date DATETIME, message TEXT, paymentID TEXT, privacy TEXT, tag TEXT, senderBalance FLOAT, recipientBalance FLOAT)''')
-cursor.execute('''CREATE TABLE IF NOT EXISTS users (username TEXT, password TEXT, friends TEXT DEFAULT "*", balance FLOAT DEFAULT 0.0, accounttype TEXT, bank TEXT DEFAULT "*", privacy TEXT DEFAULT "*", verification DATETIME DEFAULT "0001-01-01 00:00:00.0", ssn TEXT DEFAULT "*") ''')
+cursor.execute('''CREATE TABLE IF NOT EXISTS users (username TEXT, password TEXT, friends TEXT DEFAULT "*", balance FLOAT DEFAULT 0.0, accounttype TEXT, bank TEXT DEFAULT "*", privacy TEXT DEFAULT "*", verification DATETIME DEFAULT "0001-01-01 00:00:00.0", ssn TEXT DEFAULT "*", fees FLOAT DEFAULT 0.0) ''')
 
 def init(argv,cursor):
     if len(argv) == 1:
@@ -57,12 +57,21 @@ def init(argv,cursor):
                 deposit(argv[2],argv[3],cursor)
             return
         if argv[1] == "transfer":
-            transfer()
+            #transfer userID amount [type (instant/"no fee") (default = "no fee")]
+            if len(argv) == 4:
+                transfer(argv[2],argv[3],cursor)
+            elif len(argv) == 5:
+                transfer(argv[2],argv[3],cursor,argv[4])
             return
         if argv[1] == "friend":
             if len(argv) == 4:
                 friend(argv[2], argv[3], cursor)
             return
+        if argv[1] == "balance":
+            #balance userID password
+            if len(argv) == 4:
+                balance(argv[2],argv[3],cursor)
+                return
         if argv[1] == "adduser":
             #adduser userID password accounttype
             if len(argv) == 5:
@@ -89,7 +98,18 @@ def init(argv,cursor):
                 unfriend(argv[2],argv[3],cursor)
             return
         if argv[1] == "setPrivacy":
-            setprivacy()
+            if len(argv) == 4:
+                setprivacy(argv[2],argv[3],cursor)
+            return
+        if argv[1] == "updatePrivacy":
+            if len(argv) == 5:
+                updateprivacy(argv[2],argv[3],argv[4], cursor)
+            return
+        if argv[1] == "transactionPrivacy":
+            #transactionPrivacy userID paymentID privacy
+            if len(argv) == 5:
+                transactionprivacy(argv[2],argv[3],argv[4], cursor)
+                return
         if argv[1] == "globallog":
             globallog()
             return
