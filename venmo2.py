@@ -94,7 +94,8 @@ def init(argv,cursor):
             return
         if argv[1] == "updatePrivacy":
             if len(argv) == 5:
-                updateprivacy(argv[2],argv[3],arg[4], cursor)
+                updateprivacy(argv[2],argv[3],argv[4], cursor)
+            return
         if argv[1] == "globallog":
             globallog()
             return
