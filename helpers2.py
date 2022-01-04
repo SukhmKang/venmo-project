@@ -1,6 +1,8 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 tags = ["food", "groceries", "rent", "utilities", "sports", "fun", "transportation", "drinks", "business", "tickets", "gift", "gas"]
 cmds = ["pay","linkbank","override","request","transfer","deposit"]
+
+### HELPER FUNCTIONS ###
 
 def fetch(fetchone):
     return str(''.join(fetchone))
@@ -68,6 +70,103 @@ def friendchecker(senderID,recipientID,cursor):
         return False
     return True
 
+#function takes a user and a command and determines if they have crossed the Venmo limit for that command
+def limitenforcer(userID,cmd,amount,cursor):
+    #possible inputs for cmd: "pay", "request", "transfer", "deposit"
+    #make sure user exists
+    if not validateuser:
+        return
+
+    #fetch user type
+    cursor.execute(''' SELECT accounttype FROM users WHERE username=?''',(userID,))
+    accountType = fetch(cursor.fetchone())
+
+    #figure out if user is verified or not
+    cursor.execute(''' SELECT ssn FROM users WHERE username=?''',(userID,))
+    ssn = fetch(cursor.fetchone())
+    verified = ssn != "*"
+
+    #get the date from one week ago
+    oneweekago = datetime.now() - timedelta(7)
+
+    #set (v) verified and (u) unverified limits for (p) personal and (b) business accounts
+    p_unverifiedlimit = 299.99
+    p_verifiedlimit = 6999.99
+    b_unverifiedlimit = 2499.99
+    b_verifiedlimit = 24999.99
+    p_maxpayment = 4999.99
+    p_utransferlim = 999.99
+    p_vtransferlim = 19999.99
+    b_utransferlim = 999.99
+    b_vtransferlim = 49999.99
+    p_maxdeposit = 1500.00
+    b_maxtransfer = 10000.00
+
+    #figure how much the user has paid out in the last week and check if it exceeds any limits
+    if cmd == "pay":
+        cursor.execute(''' SELECT SUM(amount) FROM paymentLog WHERE senderID=? AND date>=? AND status=? ''',(userID,oneweekago,"_payment"))
+        amountspent = float(str(cursor.fetchone()).replace("(","").replace(")","").replace(",",""))
+        if accountType =="Personal":
+            if amount > p_maxpayment:
+                print(f"Error: Payment amount exceeds max {accountType} payment amount of ${p_maxpayment}.")
+                return False
+            if (not verified) and ((amountspent + amount) > p_unverifiedlimit):
+                print(f"Error: This week, you have already spent ${amountspent}. This payment would cause {userID} to exceed the weekly unverified {accountType} payment limit of ${p_unverifiedlimit} by:")
+                print(f"${amountspent + amount - p_unverifiedlimit}")
+                return False
+            elif (verified) and ((amountspent + amount) > p_verifiedlimit):
+                print(f"Error: This week, you have already spent ${amountspent}. This payment would cause {userID} to exceed the weekly verified {accountType} payment limit of $${p_verifiedlimit} by:")
+                print(f"${amountspent + amount - p_verifiedlimit}")
+                return False
+        elif accountType =="Business":
+            if (not verified) and ((amountspent + amount) > b_unverifiedlimit):
+                print(f"Error: This week, you have already spent ${amountspent}. This payment would cause {userID} to exceed the weekly unverified {accountType} payment limit of ${b_unverifiedlimit} by:")
+                print(f"${amountspent + amount - b_unverifiedlimit}")
+                return False
+            elif (verified) and ((amountspent + amount) > b_verifiedlimit):
+                print(f"Error: This week, you have already spent ${amountspent}. This payment would cause {userID} to exceed the weekly verified {accountType} payment limit of ${b_verifiedlimit} by:")
+                print(f"${amountspent + amount - b_verifiedlimit}")
+                return False
+    #Checks if request is asking for a too large amount
+    elif cmd == "request":
+        if accountType == "Personal" and (amount > p_maxpayment):
+            print(f"Error: You cannot request an amount higher than ${p_maxpayment}")
+            return False
+    #checks if user has exceeded weekly transfer limit
+    elif cmd == "transfer":
+        cursor.execute(''' SELECT SUM(amount) FROM paymentLog WHERE senderID=? AND date>=? AND status=? ''',(userID,oneweekago,"transfer"))
+        amounttransferred = float(str(cursor.fetchone()).replace("(","").replace(")","").replace(",",""))
+        if accountType == "Personal":
+            if (not verified) and ((amounttransferred + amount) > p_utransferlim):
+                print(f"Error: This week, you have already transferred ${amounttransferred}. This transfer would cause {userID} to exceed the weekly unverified {accountType} transfer limit of ${p_utransferlim} by:")
+                print(f"${amounttransferred + amount - p_utransferlim}")
+                return False
+            elif (verified) and ((amounttransferred + amount) > p_vtransferlim):
+                print(f"Error: This week, you have already transferred ${amounttransferred}. This transfer would cause {userID} to exceed the weekly unverified {accountType} transfer limit of ${p_vtransferlim} by:")
+                print(f"${amounttransferred + amount - p_vtransferlim}")
+                return False
+        elif accountType == "Business":
+            if (amount > b_maxtransfer):
+                print(f"Error: The attempted transfer exceeds the maximum amount allowed for a {accountType} transfer of {b_maxtransfer} by:")
+                print(f"${amount - b_maxtransfer}")
+                return False
+            if (not verified) and ((amounttransferred + amount) > b_utransferlim):
+                print(f"Error: This week, you have already transferred ${amounttransferred}. This transfer would cause {userID} to exceed the weekly unverified {accountType} transfer limit of ${b_utransferlim} by:")
+                print(f"${amounttransferred + amount - b_utransferlim}")
+                return False
+            elif (verified) and ((amounttransferred + amount) > b_vtransferlim):
+                print(f"Error: This week, you have already transferred ${amounttransferred}. This transfer would cause {userID} to exceed the weekly unverified {accountType} transfer limit of ${b_vtransferlim} by:")
+                print(f"${amounttransferred + amount - b_vtransferlim}")
+                return False
+    elif cmd == "deposit" and accountType == "Personal":
+        if amount > p_maxdeposit:
+            print(f"Error: You cannot deposit more than ${p_maxdeposit} at once.")
+            return False
+
+    return True
+
+### CORE FUNCTIONS ###
+
 #Sends payment from one user to another
 def pay(senderID,recipientID,amount,message,cursor,tag=None,privacy=None):
     cursor.execute(''' SELECT username FROM users WHERE username=?''', (senderID,))
@@ -78,6 +177,10 @@ def pay(senderID,recipientID,amount,message,cursor,tag=None,privacy=None):
     if cursor.fetchone() == None:
         print("Error: Recipient not in system.")
         return False
+    if senderID==recipientID:
+        print("Error: You can't pay yourself!")
+        return False
+
     if not verifiedtime(senderID,120,cursor):
         print(f"Error: To complete a payment you must verify your account in the past 120 days.")
         return False
@@ -96,22 +199,20 @@ def pay(senderID,recipientID,amount,message,cursor,tag=None,privacy=None):
     if not friendchecker(senderID,recipientID,cursor):
         return False
 
+    if not limitenforcer(senderID, "pay", amount, cursor):
+        return
+
     cursor.execute(''' SELECT privacy FROM users WHERE username=? ''', (senderID,))
     senderprivacy = ''.join(cursor.fetchone())
-    print(senderprivacy)
     cursor.execute(''' SELECT privacy FROM users WHERE username=? ''', (recipientID,))
     recipientprivacy = ''.join(cursor.fetchone())
-    print(recipientprivacy)
-    print(privacy)
 
     if privacy == None: 
         if senderprivacy == "Private" or recipientprivacy == "Private":
-            print(recipientprivacy)
-            print(senderprivacy)
             privacy = "Private"
         elif senderprivacy == "Friends Only" or recipientprivacy == "Friends Only":
             privacy = "Friends Only"
-        elif senderprivacy == "Public" and recipientprivacy == "Public":
+        elif senderprivacy == "Public" or recipientprivacy == "Public":
             privacy = "Public"
         else:
             print("Error: Neither user has a default privacy setting and a privacy setting was not manually inputted.")
@@ -204,6 +305,8 @@ def linkbank(userID, bankID, cursor):
 
     if bankcheck(bankID):
         cursor.execute( ''' UPDATE users SET bank=? WHERE username=?''',(bankID,userID))
+    
+    print(f"Bank {bankID} successfully linked!")
 
 def override(userID, password, bankID, cursor):
     if not validateuser(userID,cursor):
@@ -227,6 +330,10 @@ def request(userID, friendID,amount,message,cursor,tag=None):
     if not validateuser(userID,cursor):
         return
     
+    if userID == friendID:
+        print("Error: You can't request yourself!")
+        return
+    
     #checks if friendID exists
     cursor.execute(''' SELECT username FROM users WHERE username=?''', (friendID,))
     if cursor.fetchone() == None:
@@ -237,7 +344,7 @@ def request(userID, friendID,amount,message,cursor,tag=None):
     if not verifiedtime(userID,120,cursor):
         print(f"Error: To request you must verify your account in the past 120 days.")
         return
-    
+
     #checks if amount is a number
     try:
         amount = float(amount)
@@ -250,6 +357,9 @@ def request(userID, friendID,amount,message,cursor,tag=None):
 
     #checks if you are friends with friendID
     if not friendchecker(userID,friendID,cursor):
+        return
+
+    if not limitenforcer(userID, "request", amount, cursor):
         return
 
     #generates requestID
@@ -285,7 +395,7 @@ def acceptrequest(senderID,paymentID,cursor,privacy=None):
         elif request_status =="_payment":
             print("Error: This payment ID corresponds to a payment, not a request.")
             return
-        elif request_status == "*payment":
+        elif request_status == "transfer":
             print("Error: This payment ID corresponds to a transfer, not a request.")
             return
     except TypeError:
@@ -349,7 +459,7 @@ def unrequest(recipientID,paymentID,cursor):
         elif request_status =="_payment":
             print("Error: This payment ID corresponds to a payment, not a request.")
             return
-        elif request_status == "*payment":
+        elif request_status == "transfer":
             print("Error: This payment ID corresponds to a transfer, not a request.")
             return
 
@@ -383,7 +493,7 @@ def denyrequest(senderID,paymentID,cursor):
         elif request_status =="_payment":
             print("Error: This payment ID corresponds to a payment, not a request.")
             return
-        elif request_status == "*payment":
+        elif request_status == "transfer":
             print("Error: This payment ID corresponds to a transfer, not a request.")
             return
     except TypeError:
@@ -403,7 +513,7 @@ def deposit(userID, amount, cursor):
     try:
         amount = float(amount)
         if amount <= 0:
-            print("Error: You cannot deposit a negative amount of money into your Venmo.")
+            print("Error: You cannot deposit zero dollars or a negative amount of money into your Venmo.")
             return
     except ValueError:
         print("Error: Did not input a numerical amount.")
@@ -413,6 +523,10 @@ def deposit(userID, amount, cursor):
     if bankID == "*":
         print("Error: You do not have bank account set up.\nUse linkBank to add your information.")
         return
+
+    if not limitenforcer(userID, "deposit", amount, cursor):
+        return
+
     userBalance = getbalance(userID,cursor)
     userBalance += amount
     cursor.execute( ''' UPDATE users SET balance=? WHERE username =?''',(userBalance,userID))
@@ -443,19 +557,77 @@ def verify(userID,password,SSN,cursor):
     else:
         print("Verification failed. SSN incorrect ")
 
-def transfer(userID, amount, type, cursor):
+def balance(userID, password, cursor):
+    if not validateuser(userID,cursor):
+        return
+    if not passwordchecker(userID,password,cursor):
+        return
+    print(f"Your balance is: ${getbalance(userID,cursor)}.")
+
+def transfer(userID, amount, cursor, type="no fee"):
     if not validateuser(userID,cursor):
         print("Verification failed.")
         return
-
     if not verifiedtime(userID,90,cursor):
         print(f"Error: To transfer you must verify your account in the past 90 days.")
         return
+    cursor.execute(''' SELECT bank FROM users WHERE username=?''',(userID,))
+    userBank = fetch(cursor.fetchone())
+    if userBank == "*":
+        print("Error: User must set up bank account before transferring.")
+        return
+    #error checking: need to check if amount is a numerical value or not
+    try:
+        amount = float(amount)
+        if amount <= 0:
+            print("Error: You cannot pay someone 0 or negative dollars.")
+            return False
+    except ValueError:
+        print("Error: Did not input a numerical payment amount.")
+        return False
+
+    if not limitenforcer(userID, "transfer", amount, cursor):
+        return
+
+    #fee calculation step
+    if type.lower() == "instant":
+        fee = round(min((0.015 * amount),15),2)
+        type = "Instant Transfer"
+    elif type.lower()=="no fee":
+        fee = 0
+        type = "No Fee Transfer"
+    else:
+        print("Error: Please enter a valid transfer type:\nTransfer types include:\n•Instant\n•No Fee")
+        return
+    
+    userBalance = getbalance(userID,cursor)
+    userBalance = userBalance - amount
+    if userBalance < 0:
+        print(f"You cannot transfer more than you have in your account. Current balance: {userBalance + amount}.")
+        return
+    #Updating users and paymentLog
+    cursor.execute(''' UPDATE users SET balance=? WHERE username=?''',(userBalance,userID))
+    cursor.execute(''' UPDATE users SET fees=fees+? WHERE username=?''',(fee,userID))
+    cursor.execute(''' ''')
+    
+    #generating transfer ID
+    transferID = hash(str(userID)+str(userBank)+str(type)+str(datetime.now()))
+    print(f"${amount} transferred to Bank: {userBank}. Your new balance is ${userBalance}.")
+    if fee > 0:
+        print(f"Your fee for this transfer was: ${fee}")
+
+    cursor.execute(''' INSERT INTO paymentLog (senderID, recipientID, amount, status, date, message, paymentID, privacy, tag, senderBalance, recipientBalance)
+    VALUES (?,?,?,?,?,?,?,?,?,?,?) ''',(userID,userBank,amount,"transfer",datetime.now(),type,transferID,None,None,None,None))
+
 
     return
 
 def friend(userID, friendID, cursor):
     if not validateuser(userID,cursor):
+        return
+
+    if userID == friendID:
+        print("Error: You cannot friend yourself!")
         return
 
     cursor.execute(''' SELECT username FROM users WHERE username=?''', (friendID,))
@@ -606,6 +778,10 @@ def adduser(userID, password, accountType,cursor):
     if str(accountType.lower()) != "personal" and str(accountType.lower()) != "business":
         print("Error: Invalid account type.")
         return
+    if accountType.lower() == "personal":
+        accountType = "Personal"
+    else:
+        accountType = "Business"
     cursor.execute(''' SELECT username FROM users WHERE username LIKE ?''', (userID,))
     if cursor.fetchone():
         print("Error: Account with that username already exists.")
@@ -619,8 +795,98 @@ def adduser(userID, password, accountType,cursor):
     (userID, "*", 0.0, accountType, password))
     return
 
-def globallog(argv):
+def validatepayment(paymentID,cursor):
+    cursor.execute(''' SELECT paymentID FROM paymentLog WHERE paymentID=?''',(paymentID,))
+    if cursor.fetchone():
+        return True
+    else:
+        print("Error: A payment with this ID does not exist.")
+        return False
+
+def transactionprivacy(userID,paymentID,newprivacy,cursor):
+    if not validateuser(userID,cursor):
+        return
+    if not validatepayment(paymentID,cursor):
+        return
+    cursor.execute(''' SELECT senderID FROM paymentLog WHERE paymentID =? ''',(paymentID,))
+    sender = fetch(cursor.fetchone())
+    cursor.execute(''' SELECT recipientID FROM paymentLog WHERE paymentID =? ''',(paymentID,))
+    recipient = fetch(cursor.fetchone())
+    if userID != sender and userID != recipient:
+        print(f"Error: {userID} was not involved in this payment.")
+        return
+    cursor.execute(''' SELECT privacy FROM paymentLog WHERE paymentID=?''',(paymentID,))
+    privacy = fetch(cursor.fetchone())
+    if newprivacy.lower() == "private":
+        newprivacy = "Private"
+    if newprivacy.lower() == "public":
+        newprivacy = "Public"
+    if newprivacy.lower() == "friends only":
+        newprivacy = "Friends Only"
+    if not privacycheck(newprivacy):
+        return
+    if newprivacy == privacy:
+        print(f"Error: Payment privacy is already {privacy}.")
+        return
+    if (privacy == "Private") or (privacy == "Friends Only" and newprivacy == "Public"):
+        print(f"Error: Since Transaction {paymentID} is {privacy}, it cannot be changed to {newprivacy}.")
+        return
+    if (privacy == "Friends Only" and newprivacy == "Private") or (privacy == "Public"):
+        cursor.execute(''' UPDATE paymentLog SET privacy=? WHERE paymentID=?''',(newprivacy,paymentID))
+        print(f"Privacy for Payment {paymentID} converted from {privacy} to {newprivacy}.")
     return
+
+def globallog(cursor, userID):
+    if not validateuser(userID,cursor):
+        return
+    #getting list of user's friends to track Friends Only transactions
+    cursor.execute(''' SELECT friends FROM users WHERE username=?''', (userID,))
+    userFriends = fetch(cursor.fetchone())
+    userFriends = userFriends.split(",")
+    numFriends = len(userFriends)
+
+    #filtering the database for globally visible payments to userID (Public,  Friends Only involving their friends, and all transactions involving userID)
+    cursor.execute(''' SELECT paymentID FROM paymentLog WHERE ((privacy=? OR senderID=? OR recipientID=?) OR (privacy=? AND (recipientID IN ? OR senderID IN ?))) AND status=?''', ("Public",userID, userID, "Friends Only", userFriends, userFriends, "_payment"))
+    if (fetch(cursor.fetchone()) == None):
+        print("The global log is currently empty. There are no records of Public transactions.")
+        return
+    else:
+        log = cursor.fetchall()
+        for elem in log:
+            #getting the specific paymentID for the current payment in the log
+            paymentID = fetch(elem)
+            #getting the sender and recipient corresponding to that paymentID
+            cursor.execute(''' SELECT senderID FROM paymentLog WHERE paymentID=?''',(paymentID,))
+            senderID = fetch(cursor.fetchone())
+            cursor.execute(''' SELECT recipientID FROM paymentLog WHERE paymentID=?''',(paymentID,))
+            recipientID = fetch(cursor.fetchone())
+            #getting paymentDate for the current payment in the log
+            cursor.execute(''' SELECT date FROM paymentLog WHERE paymentID=?''', (paymentID,))
+            date = fetch(cursor.fetchone())
+            #getting message for the current payment in the log
+            cursor.execute(''' SELECT message FROM paymentLog WHERE paymentID=?''', (paymentID,))
+            message = fetch(cursor.fetchone())
+            #getting tag for the current payment, if it exists
+            cursor.execute(''' SELECT tag FROM paymentLog WHERE paymentID=?''', (paymentID,))
+            try:
+                tag = fetch(cursor.fetchone())
+            except TypeError:
+                tag = None
+            #getting the privacy of the current payment in the log
+            cursor.execute(''' SELECT privacy FROM paymentLog WHERE paymentID=?''', (paymentID,))
+            privacy = fetch(cursor.fetchone())
+
+            #printing the payment to the log
+            print("======")
+            print(f"{senderID.upper()} paid {recipientID.upper()}")
+            print(f"Date: {date}")
+            print(f"Message: {message}")
+            print(f"ID: {paymentID}")
+            print(f"Privacy: {privacy}")
+            if (tag != None):
+                print(f"Tag: {tag}")
+            print("======\n")
+
 
 def friendlog(argv):
     return
