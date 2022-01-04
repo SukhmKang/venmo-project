@@ -1,7 +1,7 @@
 import sqlite3
 import sys
 from datetime import datetime
-from helpers import pay, request, unrequest, deposit, transfer, friend, adduser, globallog, friendlog, personallog, transactionslog, requestlog, viewprofile, linkbank, override, verify, setprivacy, unfriend, acceptrequest, denyrequest, updateprivacy, transactionprivacy, balance
+from helpers import pay, request, unrequest, deposit, transfer, friend, adduser, globallog, friendlog, personallog, transactionslog, requestlog, viewprofile, linkbank, override, verify, setprivacy, unfriend, acceptrequest, denyrequest, updateprivacy, transactionprivacy, balance, inputvalidater
 
 tags = ["food", "groceries", "rent", "utilities", "sports", "fun", "transportation", "drinks", "business", "tickets", "gift", "gas"]
 db = sqlite3.connect('venmo.db')
@@ -15,6 +15,7 @@ def init(argv,cursor):
         print("Please enter a command.")
         return
     else:
+        argv[1] = argv[1].lower()
         if argv[1] == "pay":
             if len(argv) == 6:
                 pay(argv[2],argv[3],argv[4],argv[5],cursor)
@@ -78,7 +79,7 @@ def init(argv,cursor):
             if len(argv) == 5:
                 adduser(argv[2],argv[3],argv[4],cursor)
             return
-        if argv[1] == "linkBank":
+        if argv[1] == "linkbank":
             #linkBank userID bankID
             if len(argv) == 4:
                 linkbank(argv[2],argv[3],cursor)
@@ -98,23 +99,22 @@ def init(argv,cursor):
             if len(argv) == 4:
                 unfriend(argv[2],argv[3],cursor)
             return
-        if argv[1] == "setPrivacy":
+        if argv[1] == "setprivacy":
             if len(argv) == 4:
                 setprivacy(argv[2],argv[3],cursor)
             return
-        if argv[1] == "updatePrivacy":
+        if argv[1] == "updateprivacy":
             if len(argv) == 5:
                 updateprivacy(argv[2],argv[3],argv[4], cursor)
             return
-        if argv[1] == "transactionPrivacy":
+        if argv[1] == "transactionprivacy":
             #transactionPrivacy userID paymentID privacy
             if len(argv) == 5:
                 transactionprivacy(argv[2],argv[3],argv[4], cursor)
                 return
         if argv[1] == "globallog":
             #globallog userID
-            if len(argv) == 3:
-                globallog(cursor, argv[2])
+            inputvalidater(argv,cursor)
             return
         if argv[1] == "friendlog":
             friendlog()
@@ -122,7 +122,7 @@ def init(argv,cursor):
         if argv[1] == "personallog":
             personallog()
             return
-        if argv[1] == "transactionslog":
+        if argv[1] == "transactionlog":
             transactionslog()
             return
         if argv[1] == "requestlog":

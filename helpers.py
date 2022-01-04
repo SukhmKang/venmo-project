@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta
+import re
 tags = ["food", "groceries", "rent", "utilities", "sports", "fun", "transportation", "drinks", "business", "tickets", "gift", "gas"]
-cmds = ["pay","linkbank","override","request","transfer","deposit"]
+cmds = ["pay","linkbank","override","request","transfer","deposit","acceptrequest","unrequest","denyrequest","friend","balance","adduser","verify","unfriend","setprivacy","updateprivacy","transactionprivacy","globallog","friendlog","personallog","transactionlog","requestlog","viewprofile"]
 
 ### HELPER FUNCTIONS ###
 
@@ -70,6 +71,16 @@ def friendchecker(senderID,recipientID,cursor):
     recipientFriends = friendgetter(recipientID,cursor)
     if senderID not in recipientFriends:
         print("Error: " + recipientID + " has not friended you back.")
+        return False
+    return True
+
+#Checks if user has friended another user and/or if the other user has friended them back. Does not print anything.
+def friendcheck(senderID,recipientID,cursor):
+    senderFriends = friendgetter(senderID,cursor)
+    if recipientID not in senderFriends:
+        return False
+    recipientFriends = friendgetter(recipientID,cursor)
+    if senderID not in recipientFriends:
         return False
     return True
 
@@ -307,9 +318,10 @@ def pay(senderID,recipientID,amount,message,cursor,tag=None,privacy=None):
     cursor.execute(''' UPDATE users SET balance = ? WHERE username=? ''',(senderBalance,senderID))
     cursor.execute(''' UPDATE users SET balance = ? WHERE username=? ''',(recipientBalance,recipientID))
     cursor.execute(''' INSERT INTO paymentLog (senderID, recipientID, amount, status, date, message, paymentID, privacy, tag, senderBalance, recipientBalance)
-    VALUES (?,?,?,?,?,?,?,?,?,?,?) ''',(senderID,recipientID,amount,"_payment",datetime.now(),message,paymentID,privacy,tag,senderBalance,recipientBalance))
+    VALUES (?,?,?,?,?,?,?,?,?,?,?) ''',(senderID,recipientID,amount,"_payment",datetime.now(),message.strip('"'),paymentID,privacy,tag,senderBalance,recipientBalance))
     print(f"Successfuly paid {recipientID} ${amount}!")
-    print(f"{recipientID} was charged a {accountType} account fee of ${fee} for this transaction, so ${amount-fee} was added to their balance.")
+    if fee > 0:
+        print(f"{recipientID} was charged a {accountType} account fee of ${fee} for this transaction, so ${amount-fee} was added to their balance.")
     return True
 
 def linkbank(userID, bankID, cursor):
@@ -874,56 +886,136 @@ def transactionprivacy(userID,paymentID,newprivacy,cursor):
         print(f"Privacy for Payment {paymentID} converted from {privacy} to {newprivacy}.")
     return
 
-def globallog(cursor, userID):
+def globallog(cursor,userID,below=False,above=False,sender=False,recipient=False,olddate=False,messagefilter=False,rangeupper=False,rangelower=False,tagfilter=False,messagecontains=False):
     if not validateuser(userID,cursor):
         return
+    
     #getting list of user's friends to track Friends Only transactions
     cursor.execute(''' SELECT friends FROM users WHERE username=?''', (userID,))
     userFriends = fetch(cursor.fetchone())
     userFriends = userFriends.split(",")
-    numFriends = len(userFriends)
 
     #filtering the database for globally visible payments to userID (Public,  Friends Only involving their friends, and all transactions involving userID)
-    cursor.execute(''' SELECT paymentID FROM paymentLog WHERE ((privacy=? OR senderID=? OR recipientID=?) OR (privacy=? AND (recipientID IN ? OR senderID IN ?))) AND status=?''', ("Public",userID, userID, "Friends Only", userFriends, userFriends, "_payment"))
-    if (fetch(cursor.fetchone()) == None):
+    cursor.execute(''' SELECT paymentID FROM paymentLog ''') 
+    log = cursor.fetchall()
+    if (log == None):
         print("The global log is currently empty. There are no records of Public transactions.")
         return
     else:
-        log = cursor.fetchall()
+        counter = 1
         for elem in log:
-            #getting the specific paymentID for the current payment in the log
+            #get the paymentID
             paymentID = fetch(elem)
-            #getting the sender and recipient corresponding to that paymentID
-            cursor.execute(''' SELECT senderID FROM paymentLog WHERE paymentID=?''',(paymentID,))
+
+            #get the payment status
+            cursor.execute(''' SELECT status FROM paymentLog WHERE rowid = ?''', (counter,))
+            status = fetch(cursor.fetchone())
+
+            #if the paymennt is a transfer or request, continue
+            if status != "_payment":
+                counter += 1
+                continue
+
+            #get privacy
+            cursor.execute(''' SELECT privacy FROM paymentLog WHERE rowid = ?''', (counter,))
+            try:
+                privacy = fetch(cursor.fetchone())
+            except TypeError:
+                privacy = None
+            
+            #get senderID
+            cursor.execute(''' SELECT senderID FROM paymentLog WHERE rowid = ?''', (counter,))
             senderID = fetch(cursor.fetchone())
-            cursor.execute(''' SELECT recipientID FROM paymentLog WHERE paymentID=?''',(paymentID,))
+            
+            #get recipientID
+            cursor.execute(''' SELECT recipientID FROM paymentLog WHERE rowid = ?''', (counter,))
             recipientID = fetch(cursor.fetchone())
-            #getting paymentDate for the current payment in the log
-            cursor.execute(''' SELECT date FROM paymentLog WHERE paymentID=?''', (paymentID,))
-            date = fetch(cursor.fetchone())
-            #getting message for the current payment in the log
-            cursor.execute(''' SELECT message FROM paymentLog WHERE paymentID=?''', (paymentID,))
+
+            #privacy is public, friends only and ur friends with one, ur in the transaction
+            cond1 = privacy == "Public"
+            cond2 = privacy == "Friends Only" and (friendcheck(userID, senderID, cursor) or friendcheck(userID, recipientID, cursor))
+            cond3 = senderID == userID or recipientID == userID
+            if not (cond1 or cond2 or cond3):
+                counter += 1
+                continue
+
+            #apply sender/recipient filters
+            if (sender != False) and (sender.lower() != senderID.lower()):
+                counter+=1
+                continue
+            if (recipient != False) and (recipient.lower() != recipientID.lower()):
+                counter+=1
+                continue
+
+            #get message
+            cursor.execute(''' SELECT message FROM paymentLog WHERE rowid = ?''', (counter,))
             message = fetch(cursor.fetchone())
-            #getting tag for the current payment, if it exists
-            cursor.execute(''' SELECT tag FROM paymentLog WHERE paymentID=?''', (paymentID,))
+
+            #apply message / messagecontains filters
+            if (messagefilter !=False) and (messagefilter.lower() != message.lower()):
+                counter+=1
+                continue
+
+            if (messagecontains != False) and (messagecontains.lower() not in message.lower()):
+                counter+=1
+                continue
+
+            #get date
+            cursor.execute(''' SELECT date FROM paymentLog WHERE rowid = ?''', (counter,))
+            date = fetch(cursor.fetchone())
+            date = datetime.strptime(date, '%Y-%m-%d %H:%M:%S.%f')
+            
+            #apply date filter
+            if olddate!=False and (date < olddate):
+                counter+=1
+                continue
+
+            #get tag
+            cursor.execute(''' SELECT tag FROM paymentLog WHERE rowid = ?''', (counter,))
             try:
                 tag = fetch(cursor.fetchone())
             except TypeError:
                 tag = None
-            #getting the privacy of the current payment in the log
-            cursor.execute(''' SELECT privacy FROM paymentLog WHERE paymentID=?''', (paymentID,))
-            privacy = fetch(cursor.fetchone())
+        
+            #apply tag filter
+            if tagfilter !=False and (tag != tagfilter):
+                counter+=1
+                continue
+
+            #get amount
+            cursor.execute(''' SELECT amount FROM paymentLog WHERE rowid = ?''', (counter,))
+            amount = float(str(cursor.fetchone()).replace("(","").replace(")","").replace(",",""))
+
+            #apply below/above/range filters
+            if below !=False and amount >= below:
+                counter+=1
+                continue
+
+            if above !=False and amount <= above:
+                counter+=1
+                continue
+
+            if (rangeupper != False) and (amount > rangeupper and amount < rangelower):
+                counter+=1
+                continue
 
             #printing the payment to the log
             print("======")
-            print(f"{senderID.upper()} paid {recipientID.upper()}")
+            twodecimalformatting = "{:.2f}"
+            if cond3:
+                print(f"{senderID.upper()} paid {recipientID.upper()} ${twodecimalformatting.format(amount)}")
+            else:
+                print(f"{senderID.upper()} paid {recipientID.upper()}")
             print(f"Date: {date}")
             print(f"Message: {message}")
             print(f"ID: {paymentID}")
-            print(f"Privacy: {privacy}")
-            if (tag != None):
+            if privacy != None:
+                print(f"Privacy: {privacy}")
+            if tag != None:
                 print(f"Tag: {tag}")
             print("======\n")
+
+            counter += 1
 
 
 def friendlog(argv):
@@ -940,3 +1032,171 @@ def requestlog(argv):
 
 def viewprofile(userID):
     return
+
+### INPUT VALIDATER ###
+
+def inputvalidater(argv,cursor):
+    command = argv[1]
+    filters = ["-above","-below","-range","-days","-tags","-sender","-recipient","-message","-messagecontains"]
+    if command == "globallog":
+        if len(argv) == 2:
+            print("Usage: globallog userID [filters]")
+            print(f"Possible filters: {filters}")
+            return
+        userID = argv[2]
+        if len(argv) == 3:
+            globallog(cursor,userID)
+            return
+        above = False
+        below = False
+        olddate = False
+        rangeupper = False
+        rangelower = False
+        tag = False
+        sender = False
+        recipient = False
+        message = False
+        messagecontains = False
+
+        for i in range(3,len(argv),1):
+            if argv[i] == "-above":
+                if below != False:
+                    print("Error: You cannot use -above and -below simultaneously.")
+                    return
+                if above != False:
+                    print("Error: You cannot use -above more than once.")
+                    return
+                try:
+                    above = argv[i+1]
+                except IndexError:
+                    print("Error: Please enter an amount after -above.")
+                    return
+                try:
+                    above = float(above)
+                    if above <0:
+                        print("Error: You cannot enter an amount lower than 0.")
+                        return
+                except ValueError:
+                    print("Error: Please enter a numerical amount after -above.")
+                    return
+                
+            if argv[i] == "-below":
+                if above != False:
+                    print("Error: You cannot use -above and -below simultaneously.")
+                    return
+                if below != False:
+                    print("Error: You cannot use -below more than once.")
+                    return
+                try:
+                    below = argv[i+1]
+                except IndexError:
+                    print("Error: Please enter an amount after -below.")
+                    return
+                try:
+                    below = float(below)
+                except ValueError:
+                    print("Error: Please enter a numerical amount after -below.")
+                    return
+                if below <= 0:
+                    print("Error: Amount below must be greater than 0.")
+                    return
+            if argv[i] == "-range":
+                if rangeupper != False:
+                    print("Error: You cannot use -range more than once.")
+                    return
+                try:
+                    numberrange = argv[i+1]
+                except IndexError:
+                    print("Error: Please enter an interval (Example: 1-100) after -range.")
+                    return
+                if re.match("\\d+-\\d+",numberrange) == None:
+                    print("Error: Please enter an interval (Example: 1-100) after -range.")
+                    return
+                numberrange = numberrange.split("-")                
+                rangelower = float(numberrange[0])
+                rangeupper = float(numberrange[1])
+                if rangelower >= rangeupper:
+                    print("Error: Invalid interval range. Upper bound of range must exceed the lower bound.")
+            if argv[i] == "-days":
+                if olddate != False:
+                    print("Error: You cannot use -days more than once.")
+                    return
+                
+                try:
+                    days = argv[i+1]
+                except IndexError:
+                    print("Error: Please enter a number of days after -days.")
+                    return
+                try:
+                    days = int(days)
+                except ValueError:
+                    print("Error: Please enter an integer amount of days after -days.")
+                    return
+                if days <= 0:
+                    print("Error: Amount of days must be at least one.")
+                    return
+                
+                #get the date from when the user wants 
+                olddate = datetime.now() - timedelta(days)
+        
+            if argv[i] == "-tags":
+                if tag != False:
+                    print("Error: You cannot use -tags more than once.")
+                    return
+
+                try:
+                    tag = argv[i+1]
+                except IndexError:
+                    print("Error: Please enter tag after -tags.")
+                    return
+                try:
+                    tag = tag.lower()
+                except SyntaxError:
+                    print("Error: Please enter a valid tag. Valid tags are:\n {tags}")
+                    return
+                if tag.lower() not in tags:
+                    print(f"Error: Invalid tag. Valid tags are:\n {tags}")
+                    return
+
+            if argv[i] == "-sender":
+                if sender != False:
+                    print("Error: You cannot use -sender more than once.")
+                    return
+                try:
+                    sender = argv[i+1]
+                except IndexError:
+                    print("Error: Please enter sender after -sender.")
+                    return
+
+
+            if argv[i] == "-recipient":
+                if recipient != False:
+                    print("Error: You cannot use -recipient more than once.")
+                    return
+                try:
+                    recipient = argv[i+1]
+                except IndexError:
+                    print("Error: Please enter recipient after -recipient.")
+                    return
+
+            if argv[i] == "-message":
+                if message != False:
+                    print("Error: You cannot use -message more than once.")
+                    return
+                try:
+                    message = argv[i+1]
+                except IndexError:
+                    print("Error: Please enter message after -message.")
+                    return
+
+            if argv[i] == "-messagecontains":
+                if messagecontains != False:
+                    print("Error: You cannot use -message more than once.")
+                    return
+                try:
+                    messagecontains = argv[i+1]
+                except IndexError:
+                    print("Error: Please enter message after -messagecontains.")
+                    return
+        globallog(cursor,userID,below,above,sender,recipient,olddate,message,rangeupper,rangelower,tag,messagecontains)
+
