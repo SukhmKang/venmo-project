@@ -1,13 +1,14 @@
 import sqlite3
 import sys
 from datetime import datetime
-from helpers import pay, request, unrequest, deposit, transfer, friend, adduser, globallog, friendlog, personallog, transactionslog, requestlog, viewprofile, linkbank, override, verify, setprivacy, unfriend, acceptrequest, denyrequest, updateprivacy, transactionprivacy, balance, limitenforcer
+from helpers import pay, request, unrequest, deposit, transfer, friend, adduser, globallog, friendlog, personallog, transactionslog, requestlog, viewprofile, linkbank, override, verify, setprivacy, unfriend, acceptrequest, denyrequest, updateprivacy, transactionprivacy, balance
 
 tags = ["food", "groceries", "rent", "utilities", "sports", "fun", "transportation", "drinks", "business", "tickets", "gift", "gas"]
 db = sqlite3.connect('venmo.db')
 cursor = db.cursor()
 cursor.execute('''CREATE TABLE IF NOT EXISTS paymentLog (senderID TEXT, recipientID TEXT, amount FLOAT, status TEXT, date DATETIME, message TEXT, paymentID TEXT, privacy TEXT, tag TEXT, senderBalance FLOAT, recipientBalance FLOAT)''')
 cursor.execute('''CREATE TABLE IF NOT EXISTS users (username TEXT, password TEXT, friends TEXT DEFAULT "*", balance FLOAT DEFAULT 0.0, accounttype TEXT, bank TEXT DEFAULT "*", privacy TEXT DEFAULT "*", verification DATETIME DEFAULT "0001-01-01 00:00:00.0", ssn TEXT DEFAULT "*", fees FLOAT DEFAULT 0.0) ''')
+
 
 def init(argv,cursor):
     if len(argv) == 1:
