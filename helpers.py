@@ -890,6 +890,8 @@ def globallog(cursor,userID,below=False,above=False,sender=False,recipient=False
     if not validateuser(userID,cursor):
         return
     
+    
+
     #getting list of user's friends to track Friends Only transactions
     cursor.execute(''' SELECT friends FROM users WHERE username=?''', (userID,))
     userFriends = fetch(cursor.fetchone())
@@ -902,6 +904,7 @@ def globallog(cursor,userID,below=False,above=False,sender=False,recipient=False
         print("The global log is currently empty. There are no records of Public transactions.")
         return
     else:
+        stuffhasbeenprinted = False
         counter = 1
         for elem in log:
             #get the paymentID
@@ -1014,8 +1017,13 @@ def globallog(cursor,userID,below=False,above=False,sender=False,recipient=False
             if tag != None:
                 print(f"Tag: {tag}")
             print("======\n")
+            stuffhasbeenprinted = True
 
             counter += 1
+    if not stuffhasbeenprinted:
+        print("======")
+        print("No recorded payments were found matching the provided filters.")
+        print("======\n")
 
 
 def friendlog(argv):
