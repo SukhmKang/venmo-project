@@ -1,6 +1,8 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 tags = ["food", "groceries", "rent", "utilities", "sports", "fun", "transportation", "drinks", "business", "tickets", "gift", "gas"]
 cmds = ["pay","linkbank","override","request","transfer","deposit"]
+
+### HELPER FUNCTIONS ###
 
 def fetch(fetchone):
     return str(''.join(fetchone))
@@ -67,6 +69,98 @@ def friendchecker(senderID,recipientID,cursor):
         print("Error: " + recipientID + " has not friended you back.")
         return False
     return True
+
+#function takes a user and a command and determines if they have crossed the Venmo limit for that command
+def limitenforcer(userID,cmd,amount,cursor):
+    #possible inputs for cmd: "pay", "request", "transfer", "deposit"
+    #make sure user exists
+    if not validateuser:
+        return
+    #fetch user type
+    cursor.execute(''' SELECT accounttype FROM users WHERE username=?''',(userID,))
+    accountType = fetch(cursor.fetchone())
+    #figure out if user is verified or not
+    cursor.execute( ''' SELECT verification FROM users WHERE username=?''',(userID,))
+    lastVerified = ''.join(cursor.fetchone())
+    if lastVerified == "0001-01-01 00:00:00.0":
+        verified=False
+    else:
+        verified=True
+    #get the date from one week ago
+    oneweekago = datetime.now() - timedelta(7)
+    #set (v) verified and (u) unverified limits for (p) personal and (b) business accounts:
+    p_unverifiedlimit = 299.99
+    p_verifiedlimit = 6999.99
+    b_unverifiedlimit = 2499.99
+    b_verifiedlimit = 24999.99
+    p_maxpayment = 4999.99
+    p_utransferlim = 999.99
+    p_vtransferlim = 19999.99
+    b_utransferlim = 999.99
+    b_vtransferlim = 49999.99
+    p_maxdeposit = 1500
+
+    #figure how much the user has paid out in the last week and check if it exceeds any limits
+    if cmd == "pay":
+        cursor.execute(''' SELECT SUM(amount) FROM paymentLog WHERE senderID=? AND date>=? AND status=? ''',(userID,oneweekago,"_payment"))
+        amountspent = float(str(cursor.fetchone()).replace("(","").replace(")","").replace(",",""))
+        if accountType =="Personal":
+            if amount > p_maxpayment:
+                print(f"Error: Payment amount exceeds max {accountType} payment amount of ${p_maxpayment}.")
+                return False
+            if (not verified) and ((amountspent + amount) > p_unverifiedlimit):
+                print(f"Error: This week, you have already spent ${amountspent}. This payment would cause {userID} to exceed the weekly unverified {accountType} payment limit of ${p_unverifiedlimit} by:")
+                print(f"${amountspent + amount - p_unverifiedlimit}")
+                return False
+            elif (verified) and ((amountspent + amount) > p_verifiedlimit):
+                print(f"Error: This week, you have already spent ${amountspent}. This payment would cause {userID} to exceed the weekly verified {accountType} payment limit of $${p_verifiedlimit} by:")
+                print(f"${amountspent + amount - p_verifiedlimit}")
+                return False
+        elif accountType =="Business":
+            if (not verified) and ((amountspent + amount) > b_unverifiedlimit):
+                print(f"Error: This week, you have already spent ${amountspent}. This payment would cause {userID} to exceed the weekly unverified {accountType} payment limit of ${b_unverifiedlimit} by:")
+                print(f"${amountspent + amount - b_unverifiedlimit}")
+                return False
+            elif (verified) and ((amountspent + amount) > b_verifiedlimit):
+                print(f"Error: This week, you have already spent ${amountspent}. This payment would cause {userID} to exceed the weekly verified {accountType} payment limit of ${b_verifiedlimit} by:")
+                print(f"${amountspent + amount - b_verifiedlimit}")
+                return False
+    #Checks if request is asking for a too large amount
+    elif cmd == "request":
+        if accountType == "Personal" and (amount > p_maxpayment):
+            print(f"Error: You cannot request an amount higher than ${p_maxpayment}")
+            return False
+    #checks if user has exceeded weekly transfer limit
+    elif cmd == "transfer":
+        cursor.execute(''' SELECT SUM(amount) FROM paymentLog WHERE senderID=? AND date>=? AND status=? ''',(userID,oneweekago,"transfer"))
+        amounttransferred = float(str(cursor.fetchone()).replace("(","").replace(")","").replace(",",""))
+        if accountType == "Personal":
+            if (not verified) and ((amounttransferred + amount) > p_utransferlim):
+                print(f"Error: This week, you have already transferred ${amounttransferred}. This transfer would cause {userID} to exceed the weekly unverified {accountType} transfer limit of ${p_utransferlim} by:")
+                print(f"${amounttransferred + amount - p_utransferlim}")
+                return False
+            elif (verified) and ((amounttransferred + amount) > p_vtransferlim):
+                print(f"Error: This week, you have already transferred ${amounttransferred}. This transfer would cause {userID} to exceed the weekly unverified {accountType} transfer limit of ${p_vtransferlim} by:")
+                print(f"${amounttransferred + amount - p_vtransferlim}")
+                return False
+        elif accountType == "Business":
+            if (not verified) and ((amounttransferred + amount) > b_utransferlim):
+                print(f"Error: This week, you have already transferred ${amounttransferred}. This transfer would cause {userID} to exceed the weekly unverified {accountType} transfer limit of ${b_utransferlim} by:")
+                print(f"${amounttransferred + amount - b_utransferlim}")
+                return False
+            elif (verified) and ((amounttransferred + amount) > b_vtransferlim):
+                print(f"Error: This week, you have already transferred ${amounttransferred}. This transfer would cause {userID} to exceed the weekly unverified {accountType} transfer limit of ${b_vtransferlim} by:")
+                print(f"${amounttransferred + amount - b_vtransferlim}")
+                return False
+    elif cmd == "deposit" and accountType == "Personal":
+        if amount > p_maxdeposit:
+            print(f"Error: You cannot deposit more than ${p_maxdeposit} at once.")
+
+
+
+    return True
+
+### CORE FUNCTIONS ###
 
 #Sends payment from one user to another
 def pay(senderID,recipientID,amount,message,cursor,tag=None,privacy=None):
@@ -290,7 +384,7 @@ def acceptrequest(senderID,paymentID,cursor,privacy=None):
         elif request_status =="_payment":
             print("Error: This payment ID corresponds to a payment, not a request.")
             return
-        elif request_status == "*payment":
+        elif request_status == "transfer":
             print("Error: This payment ID corresponds to a transfer, not a request.")
             return
     except TypeError:
@@ -354,7 +448,7 @@ def unrequest(recipientID,paymentID,cursor):
         elif request_status =="_payment":
             print("Error: This payment ID corresponds to a payment, not a request.")
             return
-        elif request_status == "*payment":
+        elif request_status == "transfer":
             print("Error: This payment ID corresponds to a transfer, not a request.")
             return
 
@@ -388,7 +482,7 @@ def denyrequest(senderID,paymentID,cursor):
         elif request_status =="_payment":
             print("Error: This payment ID corresponds to a payment, not a request.")
             return
-        elif request_status == "*payment":
+        elif request_status == "transfer":
             print("Error: This payment ID corresponds to a transfer, not a request.")
             return
     except TypeError:

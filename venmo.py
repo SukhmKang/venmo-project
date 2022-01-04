@@ -1,7 +1,7 @@
 import sqlite3
 import sys
 from datetime import datetime
-from helpers import pay, request, unrequest, deposit, transfer, friend, adduser, globallog, friendlog, personallog, transactionslog, requestlog, viewprofile, linkbank, override, verify, setprivacy, unfriend, acceptrequest, denyrequest, updateprivacy, transactionprivacy, balance
+from helpers import pay, request, unrequest, deposit, transfer, friend, adduser, globallog, friendlog, personallog, transactionslog, requestlog, viewprofile, linkbank, override, verify, setprivacy, unfriend, acceptrequest, denyrequest, updateprivacy, transactionprivacy, balance, limitenforcer
 
 tags = ["food", "groceries", "rent", "utilities", "sports", "fun", "transportation", "drinks", "business", "tickets", "gift", "gas"]
 db = sqlite3.connect('venmo.db')
@@ -135,10 +135,9 @@ with open ("commands.txt","r") as commands:
     for line in commands:
         stripped_line = line.strip()
         stripped_line = stripped_line.split(",")
-        init(stripped_line,cursor)
+        #init(stripped_line,cursor)
 
 init(sys.argv,cursor)
-
 
 
 db.commit()
