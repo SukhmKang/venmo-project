@@ -16,6 +16,14 @@ def isverified(userID,cursor):
         return False
     return True
 
+#isverified no print    
+def isVerified(userID,cursor):
+    cursor.execute(''' SELECT ssn FROM users WHERE username=?''',(userID,))
+    ssn = fetch(cursor.fetchone())
+    if ssn == "*":
+        return False
+    return True
+
 #Checks if user inputs correct password
 def passwordchecker(userID,password,cursor):
     cursor.execute( ''' SELECT password FROM users WHERE username=?''',(userID,))
@@ -31,6 +39,13 @@ def getbalance(userID,cursor):
     userBalance = str(cursor.fetchone()).replace("(","").replace(")","").replace(",","")
     userBalance = float(userBalance)
     return userBalance
+
+#Accesses total user fees
+def getfees(userID, cursor):
+    cursor.execute(''' SELECT fees FROM users WHERE username=? ''', (userID,))
+    userFees = str(cursor.fetchone()).replace("(","").replace(")","").replace(",","")
+    userFees = float(userFees)
+    return userFees
 
 #checks if a user currently exists
 def validateuser(userID,cursor):
@@ -317,6 +332,7 @@ def pay(senderID,recipientID,amount,message,cursor,tag=None,privacy=None):
     recipientBalance = recipientBalance + amount - fee
     cursor.execute(''' UPDATE users SET balance = ? WHERE username=? ''',(senderBalance,senderID))
     cursor.execute(''' UPDATE users SET balance = ? WHERE username=? ''',(recipientBalance,recipientID))
+    cursor.execute(''' UPDATE users SET fees = fees + ? WHERE username=? ''',(fee,recipientID))
     cursor.execute(''' INSERT INTO paymentLog (senderID, recipientID, amount, status, date, message, paymentID, privacy, tag, senderBalance, recipientBalance)
     VALUES (?,?,?,?,?,?,?,?,?,?,?) ''',(senderID,recipientID,amount,"_payment",datetime.now(),message.strip('"'),paymentID,privacy,tag,senderBalance,recipientBalance))
     print(f"Successfuly paid {recipientID} ${amount}!")
@@ -350,6 +366,8 @@ def linkbank(userID, bankID, cursor):
 
     if bankcheck(bankID):
         cursor.execute( ''' UPDATE users SET bank=? WHERE username=?''',(bankID,userID))
+    else:
+        return
     
     print(f"Bank {bankID} successfully linked!")
 
@@ -683,12 +701,13 @@ def friend(userID, friendID, cursor):
         print("Error: No account exists with " + friendID + " as its username.")
         return
 
-    currentFriends = friendgetter(userID,cursor)
-    if friendID in currentFriends:
+    listoffriends = friendgetter(userID,cursor)
+    cursor.execute(''' SELECT friends FROM users WHERE username=?''', (userID,))
+    currentFriends = fetch(cursor.fetchone()) 
+
+    if friendID in listoffriends:
         print("Error: You are already friends with " + friendID + ".")
         return
-    
-    cursor.execute(''' SELECT friends FROM users WHERE username=?''', (userID,))
 
     if currentFriends != "*":
         updatedFriends = str(currentFriends) + "," + friendID
@@ -840,9 +859,14 @@ def adduser(userID, password, accountType,cursor):
     if not checkpassword(password):
         return
 
-    cursor.execute(''' INSERT INTO users (username, friends, balance, accounttype, password) 
-    VALUES (?,?,?,?,?) ''',
-    (userID, "*", 0.0, accountType, password))
+    #calculating and reformatting the current date
+    date = str(datetime.now())
+    date = date[0:10]
+
+    cursor.execute(''' INSERT INTO users (username, friends, balance, accounttype, password, creationDate) 
+    VALUES (?,?,?,?,?,?) ''',
+    (userID, "*", 0.0, accountType, password, date))
+    print(f"Account has been successfully created.\nUserID: {userID}\nPassword: {password}")
     return
 
 def validatepayment(paymentID,cursor):
@@ -890,8 +914,6 @@ def globallog(cursor,userID,below=False,above=False,sender=False,recipient=False
     if not validateuser(userID,cursor):
         return
     
-    
-
     #getting list of user's friends to track Friends Only transactions
     cursor.execute(''' SELECT friends FROM users WHERE username=?''', (userID,))
     userFriends = fetch(cursor.fetchone())
@@ -1038,7 +1060,38 @@ def transactionslog(argv):
 def requestlog(argv):
     return
 
-def viewprofile(userID):
+def viewprofile(cursor, userID):
+    if not validateuser(userID, cursor):
+        return
+    #fetching profile information
+    balance = getbalance(userID, cursor)
+    fees = getfees(userID, cursor)
+    numFriends = len(friendgetter(userID, cursor))
+    if (numFriends == 1) and friendgetter(userID, cursor) == ["*"]:
+        numFriends = 0
+    verified = isVerified(userID, cursor)
+    cursor.execute(''' SELECT creationDate FROM users WHERE username=?''', (userID,))
+    date = fetch(cursor.fetchone())
+
+    #printing the profile
+    print("==================")
+    print("VENMO User Profile")
+    print("==================")
+    if verified:
+        print(f"@{userID.upper()} - √erified")
+    else:
+        print(f"@{userID.upper()} - unverified")
+    print(f"${balance}")
+    if numFriends == 0:
+        print("No friends yet!") 
+    elif (numFriends == 1):
+        print(f"{numFriends} friend")
+    else:
+        print(f"{numFriends} friends")
+    if fees > 0:
+        print(f"ƒees: ${fees}")
+    print(f"joined {date}")
+    print("==================")
     return
 
 ### INPUT VALIDATER ###
@@ -1065,6 +1118,12 @@ def inputvalidater(argv,cursor):
         recipient = False
         message = False
         messagecontains = False
+
+        if argv[3] not in filters:
+            print("Error: Invalid filter.")
+            print("Usage: globallog userID [filters]")
+            print(f"Possible filters: {filters}")
+            return
 
         for i in range(3,len(argv),1):
             if argv[i] == "-above":
@@ -1207,4 +1266,3 @@ def inputvalidater(argv,cursor):
                     print("Error: Please enter message after -messagecontains.")
                     return
         globallog(cursor,userID,below,above,sender,recipient,olddate,message,rangeupper,rangelower,tag,messagecontains)
-
