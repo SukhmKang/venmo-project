@@ -2,6 +2,7 @@
 
 This project attempts to mimic several of the core commands present in the Venmo application (https://venmo.com/), while managing a central database of user information ([users.db](#user-database-usersdb)) and recording transaction histories ([paymentLog.db](#transactions-database-paymentlogdb)) for users within the payment ecosystem. The purpose of this project was to explore the ways a company like Venmo manages a major database while retrieving information from its databases to perform a multitude of commands in a fast and space-efficient way.
 
+<img src="https://github.com/SukhmKang/passion-projects/blob/main/Venmo.py%20Image.png" width="350">
 
 ## Built With
 
@@ -102,9 +103,13 @@ Description: The viewprofile command allows a user to see their account profile 
 
 Here is an example of users.db:
 
+![](https://github.com/SukhmKang/passion-projects/blob/main/Venmo%20Users.db.png)
+
 ### Transactions Database: paymentLog.db
 
 Here is an example of paymentLog.db:
+
+![](https://github.com/SukhmKang/passion-projects/blob/main/Venmo%20paymentLog.db.png)
 
 ## Example Output
 
