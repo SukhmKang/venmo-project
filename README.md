@@ -22,23 +22,25 @@ cmds = ["pay","linkbank","override","request","transfer","deposit","acceptreques
 ```
 ### Descriptions & Usage
 
-Note: several of the commands below can take optional arguments; optional parameters will be designated as follows: \
+Note: several of the commands below can take optional arguments; optional parameters will be indicated using the following format: \
 ```cmd arg1 arg2 [-optionalParamName optionalParamValue]```
 
 Commands:
 
 
 **```venmo.py pay senderID recipientID amount message [-tag tag -privacy privacy]```**\
-Description:
+Description: The pay command allows a user to send a payment to another user in the payment ecosystem. Every payment includes an amount and payment message (taken as input from the sender), and a date and unique paymentID (calculated by our program). Senders have the option to specify a ```-privacy``` for the payment or utilize their default privacy settings. Senders also have the option to ```-tag``` payments to one of the following categories:
+
+```tags = ["food", "groceries", "rent", "utilities", "sports", "fun", "transportation", "drinks", "business", "tickets", "gift", "gas"]```
 
 **```venmo.py linkbank userID bankID```**\
-Description:
+Description: The linkbank command allows a new user to link a bank to their Venmo account using their bankID (a 9-digit routing number). A user must link their bank as a precursor to using other commands such as ```deposit```.
 
 **```venmo.py override userID password bankID```**\
-Description:
+Description: The override command allows a user to change their bank settings and switch to a new bankID. Unlike the linkbank command (which is meant for first-time use when a user needs to initially setup their bank), ```override``` is password-protected. In order for the user's bankID changes to be saved, the password must be entered correctly. 
 
 **```venmo.py request userID friendID amount message [-tag tag]```**\
-Description:
+Description: The request command allows a user to request a payment from another user in the payment ecosystem. Every request includes an amount and request message (taken as input from the requester), and a date and requestID (calculated by our program). Senders have the option to specify a ```-tag``` for the request. Once the request is sent, the requested user will be able to ```acceptrequest``` or ```denyrequest```, and the requester will always have the option to ```unrequest```.
 
 **```venmo.py transfer userID amount [-type instant or -type "no fee"]```**\
 Description:
@@ -88,11 +90,11 @@ Description:
 **```venmo.py personallog userID [filters]```**\
 Description:
 
-**```venmo.py requestlog userID [outgoing or incoming]```**\
+**```venmo.py requestlog userID [-type outgoing or -type incoming]```**\
 Description:
 
 **```venmo.py viewprofile userID```**\
-Description:
+Description: The viewprofile command allows a user to see their account profile which includes their userID, balance, verification status, number of friends, date of account creation, and aggregate fees. See examples of [user profiles](#user-profiles) below.
 
 ## Example Database
 
@@ -159,19 +161,32 @@ ID: 74808842343309024
 Privacy: Public
 ======
 ```
+### Filtering
+Like all other log commands (```friendLog```, ```personalLog```, ```requestLog```), the ```globalLog``` also allows users to input optional input to filter the data presented in the log. Users have the option to apply (and even stack) any of the following filters: 
 
-Like all other log commands (```friendLog```, ```personalLog```, ```requestLog```), the ```globalLog``` also allows users to input optional input to filter the data presented in the log. Users have the option to apply any of the following filters: 
+```filters = ["-above","-below","-range","-days","-tags","-sender","-recipient","-message","-messagecontains"]```
 
-Let's say a user may want to use the -range and -sender filters to specify a payment with an amount between $5 and $15 sent by ROB. 
+**```-above```** filters payments keeping only the transactions that are above a certain payment amount \
+**```-below```** filters payments keeping only the transactions that are above a certain payment amount \
+**```-range```** filters payments keeping only the transactions with an amount  within a certain interval \
+**```-days```** filters payments keeping only the transactions that are within the last n number of days \
+**```-tags```** filters payments keeping only the transactions that are "tagged" with a specific tag \
+**```-sender```** filters payments keeping only the transactions that are from a specific sender \
+**```-recipient```** filters payments keeping only the transactions that are to a specific recipient \
+**```-message```** filters payments keeping only the transactions that have a specific payment message \
+**```-messagecontaints```** filters payments keeping only the transactions that have a payment message which includes a certain string
 
-To do this, the user could input the following command:
+
+Let's say a user may want to use the -range and -sender filters to specify a payment with an amount between $5 and $15 sent by Rob. 
+
+To do this, the user would input the following command:
 
 COMMAND:
 
 ```
 python3 venmo.py globallog ishan -sender rob -range 5-15
 ```
-This command will print the new ```globallog``` after applying the filters. We can now see just one payment in the log.
+This command will print the new ```globallog``` after applying the specific filters. After the filtering, only one payment remains in the log.
 
 OUTPUT:
 ```
