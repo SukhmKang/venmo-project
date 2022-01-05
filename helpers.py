@@ -1087,6 +1087,8 @@ def friendlog(cursor,userID,friendID,below=False,above=False,sender=False,recipi
         recipientID = elem[1]
         amount = elem[2]
         date = elem[3]
+        #redefing date as a datetime
+        date = datetime.strptime(date, '%Y-%m-%d %H:%M:%S.%f')
         message = elem[4]
         paymentID = elem[5]
         privacy = elem[6]
@@ -1145,7 +1147,90 @@ def friendlog(cursor,userID,friendID,below=False,above=False,sender=False,recipi
         print("======\n")
     return
 
-def personallog(argv):
+def personallog(cursor,userID,below=False,above=False,sender=False,recipient=False,olddate=False,messagefilter=False,rangeupper=False,rangelower=False,tagfilter=False,messagecontains=False,transfersonly=False,paymentsonly=False):
+    cursor.execute(''' SELECT senderID, recipientID, amount, date, status, message, tag,privacy, paymentID FROM paymentLog WHERE
+    (senderID=? OR recipientID=?) AND (status=? OR status=?)
+    ''',(userID,userID,"_payment","transfer"))
+    log = cursor.fetchall()
+    if (log == None):
+        print(f"There are no transactions in the system involving {userID}.")
+        return
+    notemptylog = False
+    for elem in log:
+        senderID = elem[0]
+        recipientID = elem[1]
+        amount = elem[2]
+        date = elem[3]
+        #redefing date as a datetime
+        date = datetime.strptime(date, '%Y-%m-%d %H:%M:%S.%f')
+        status = elem[4]
+        message = elem[5]
+        tag = elem[6]
+        privacy = elem[7]
+        paymentID = elem[8]
+
+        #apply sender/recipient filters
+        if (sender != False) and (sender.lower() != senderID.lower()):
+            continue
+        if (recipient != False) and (recipient.lower() != recipientID.lower()):
+            continue
+
+        #apply message / messagecontains filters
+        if (messagefilter !=False) and (messagefilter.lower() != message.lower()):
+            continue
+
+        if (messagecontains != False) and (messagecontains.lower() not in message.lower()):
+            continue
+        
+        #apply date filter
+        if olddate!=False and (date < olddate):
+            continue
+
+        #apply tag filter False == None
+        if tagfilter !=False and (tag != tagfilter):
+            continue
+
+        #apply below/above/range filters
+        if below !=False and amount >= below:
+            continue
+
+        if above !=False and amount <= above:
+            continue
+
+        if (rangeupper != False) and (amount > rangeupper or amount < rangelower):
+            continue
+
+        #apply transferonly/paymentsonly filter
+        if transfersonly and status != "transfer":
+            continue
+        if paymentsonly and status != "_payment":
+            continue
+
+        #printing the payment to the log
+        print("=======")
+        twodecimalformatting = "{:.2f}"
+        if status == "_payment":
+            print(f"{senderID.upper()} paid {recipientID.upper()} ${twodecimalformatting.format(amount)}")
+        if status == "transfer":
+            print(f"{senderID.upper()} transferred ${twodecimalformatting.format(amount)} to bank {recipientID}")
+            print(f"{message}")
+        date = str(date)
+        date = date[0:19]
+        print(f"Date: {date}")
+        if status =="_payment":
+            print(f"Message: {message}")
+        print(f"ID: {paymentID}")
+        if privacy != None:
+            print(f"Privacy: {privacy}")
+        if tag != None:
+            print(f"Tag: {tag}")
+        print("=======\n")
+        notemptylog = True
+
+    if not notemptylog:
+        print("======")
+        print("No recorded payments were found matching the provided filters.")
+        print("======\n")
     return
 
 def requestlog(cursor,userID,below=False,above=False,incoming=False,outgoing=False,requester=False,requested=False,olddate=False,messagefilter=False,rangeupper=False,rangelower=False,tagfilter=False,messagecontains=False,statusfilter=False):
@@ -1165,6 +1250,8 @@ def requestlog(cursor,userID,below=False,above=False,incoming=False,outgoing=Fal
         recipientID = elem[1]
         amount = elem[2]
         date = elem[3]
+        #reformatting date as datetime
+        date = datetime.strptime(date, '%Y-%m-%d %H:%M:%S.%f')
         status = elem[4]
         message = elem[5]
         tag = elem[6]
@@ -1220,6 +1307,7 @@ def requestlog(cursor,userID,below=False,above=False,incoming=False,outgoing=Fal
         elif status == "accepted_request":
             print(f"{senderID.upper()} accepted {recipientID.upper()}'s request for {twodecimalformatting.format(amount)}")
         elif status == "denied_request":
+            print("DENIED REQUEST")
             print(f"{senderID.upper()} denied {recipientID.upper()}'s request for {twodecimalformatting.format(amount)}")
         elif status == "cancelled_request":
             print("CANCELLED REQUEST")
@@ -1238,9 +1326,6 @@ def requestlog(cursor,userID,below=False,above=False,incoming=False,outgoing=Fal
         print("======")
         print("No recorded payments were found matching the provided filters.")
         print("======\n")
-    return
-
-
     return
 
 def viewprofile(cursor, userID):
@@ -2073,5 +2158,200 @@ def inputvalidater(argv,cursor):
                     status = "denied_request"
 
         requestlog(cursor,userID,below,above,incoming,outgoing,requester,requested,olddate,message,rangeupper,rangelower,tag,messagecontains,status)
+        return
+    if command == "personallog":
+        personallogfilters = ["-above","-below","-range","-days","-tags","-sender","-recipient","-message","-messagecontains","-type"]
+        if len(argv) == 2:
+            print("Usage: personallog userID [filters]")
+            print(f"Possible filters: {personallogfilters}")
+            return
+        userID = argv[2].lower()
+        if len(argv) == 3:
+            personallog(cursor,userID)
+            return
+        above = False
+        below = False
+        olddate = False
+        rangeupper = False
+        rangelower = False
+        tag = False
+        sender = False
+        recipient = False
+        message = False
+        messagecontains = False
+        transfersonly = False
+        paymentsonly = False
+
+        for i in range(3,len(argv),1):
+            if (i%2==1) and argv[i].lower() not in personallogfilters:
+            #makes sure user is inputting valid filters
+                print(f"Error: Invalid filter: {argv[i]}.")
+                print("Usage: personallog userID [filters]")
+                print(f"Possible filters: {personallogfilters}")
+                return
+            #filters commands are not case sensitive
+            if (i%2 ==1):
+                argv[i] = argv[i].lower()
+            if argv[i] == "-above":
+                if below != False:
+                    print("Error: You cannot use -above and -below simultaneously. Instead, use -range")
+                    return
+                if above != False:
+                    print("Error: You cannot use -above more than once.")
+                    return
+                try:
+                    above = argv[i+1]
+                except IndexError:
+                    print("Error: Please enter an amount after -above.")
+                    return
+                try:
+                    above = float(above)
+                    if above <0:
+                        print("Error: You cannot enter an amount lower than 0.")
+                        return
+                except ValueError:
+                    print("Error: Please enter a numerical amount after -above.")
+                    return
+                
+            if argv[i] == "-below":
+                if above != False:
+                    print("Error: You cannot use -above and -below simultaneously.")
+                    return
+                if below != False:
+                    print("Error: You cannot use -below more than once.")
+                    return
+                try:
+                    below = argv[i+1]
+                except IndexError:
+                    print("Error: Please enter an amount after -below.")
+                    return
+                try:
+                    below = float(below)
+                except ValueError:
+                    print("Error: Please enter a numerical amount after -below.")
+                    return
+                if below <= 0:
+                    print("Error: Amount below must be greater than 0.")
+                    return
+            if argv[i] == "-range":
+                if rangeupper != False:
+                    print("Error: You cannot use -range more than once.")
+                    return
+                try:
+                    numberrange = argv[i+1]
+                except IndexError:
+                    print("Error: Please enter an interval (Example: 1-100) after -range.")
+                    return
+                if re.match("\\d+-\\d+",numberrange) == None:
+                    print("Error: Please enter an interval (Example: 1-100) after -range.")
+                    return
+                numberrange = numberrange.split("-")                
+                rangelower = float(numberrange[0])
+                rangeupper = float(numberrange[1])
+                if rangelower >= rangeupper:
+                    print("Error: Invalid interval range. Upper bound of range must exceed the lower bound.")
+            if argv[i] == "-days":
+                if olddate != False:
+                    print("Error: You cannot use -days more than once.")
+                    return
+                
+                try:
+                    days = argv[i+1]
+                except IndexError:
+                    print("Error: Please enter a number of days after -days.")
+                    return
+                try:
+                    days = int(days)
+                except ValueError:
+                    print("Error: Please enter an integer amount of days after -days.")
+                    return
+                if days <= 0:
+                    print("Error: Amount of days must be at least one.")
+                    return
+                
+                #get the date from when the user wants 
+                olddate = datetime.now() - timedelta(days)
+        
+            if argv[i] == "-tags":
+                if tag != False:
+                    print("Error: You cannot use -tags more than once.")
+                    return
+
+                try:
+                    tag = argv[i+1]
+                except IndexError:
+                    print("Error: Please enter tag after -tags.")
+                    return
+                try:
+                    tag = tag.lower()
+                except SyntaxError:
+                    print("Error: Please enter a valid tag. Valid tags are:\n {tags}")
+                    return
+                if tag.lower() not in tags:
+                    print(f"Error: Invalid tag. Valid tags are:\n {tags}")
+                    return
+
+            if argv[i] == "-sender":
+                if sender != False:
+                    print("Error: You cannot use -sender more than once.")
+                    return
+                try:
+                    sender = argv[i+1]
+                except IndexError:
+                    print("Error: Please enter sender after -sender.")
+                    return
+
+
+            if argv[i] == "-recipient":
+                if recipient != False:
+                    print("Error: You cannot use -recipient more than once.")
+                    return
+                try:
+                    recipient = argv[i+1]
+                except IndexError:
+                    print("Error: Please enter recipient after -recipient.")
+                    return
+
+            if argv[i] == "-message":
+                if message != False:
+                    print("Error: You cannot use -message more than once.")
+                    return
+                try:
+                    message = argv[i+1]
+                except IndexError:
+                    print("Error: Please enter message after -message.")
+                    return
+
+            if argv[i] == "-messagecontains":
+                if messagecontains != False:
+                    print("Error: You cannot use -message more than once.")
+                    return
+                try:
+                    messagecontains = argv[i+1]
+                except IndexError:
+                    print("Error: Please enter message after -messagecontains.")
+                    return
+
+            if argv[i] == "-type":
+                if paymentsonly:
+                    print("Error: You cannot use -type more than once.")
+                    return
+                if transfersonly:
+                    print("Error: You cannot use -type more than once.")
+                    return
+                try:
+                    type = argv[i+1].lower()
+                except IndexError:
+                    print("Error: Please enter transfers or payments after -type")
+                    return
+                if type != "transfers" and type != "payments":
+                    print("Error: Please enter transfers or payments after -type")
+                    return
+                if type == "transfers":
+                    transfersonly = True
+                elif type == "payments":
+                    paymentsonly = True
+        personallog(cursor,userID,below,above,sender,recipient,olddate,message,rangeupper,rangelower,tag,messagecontains,transfersonly,paymentsonly)
+
         return
 
