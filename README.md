@@ -1,6 +1,6 @@
 # Venmo Python Project
 
-This project attempts to mimic several of the core commands present in the Venmo application (https://venmo.com/), while managing a central database of user information ([users.db](#user-database-usersdb)) and recording transaction histories ([paymentLog.db](#transactions-database-paymentlogdb)) for users within the payment ecosystem. The purpose of this project was to explore the ways a company like Venmo manages a major database while retrieving information from its databases to perform a multitude of commands in a fast and space-efficient way.
+This project attempts to mimic several of the core commands present in the Venmo application (https://venmo.com/), while managing a central database of user information ([users table](#user-database-usersdb)) and recording transaction histories ([paymentLog table](#transactions-database-paymentlogdb)) for users within the payment ecosystem. The purpose of this project was to explore the ways a company like Venmo manages a major database while retrieving information from its databases to perform a multitude of commands in a fast and space-efficient way.
 
 <img src="https://github.com/SukhmKang/passion-projects/blob/main/Venmo.py%20Image.png" width="350">
 
@@ -99,15 +99,15 @@ Description: The viewprofile command allows a user to see their account profile 
 
 ## Example Database
 
-### User Database: users.db
+### User Database: Users
 
-Here is an example of users.db:
+Here is an example of our users table:
 
 ![](https://github.com/SukhmKang/passion-projects/blob/main/Venmo%20Users.db.png)
 
-### Transactions Database: paymentLog.db
+### Transactions Database: paymentLog
 
-Here is an example of paymentLog.db:
+Here is an example of our paymentLog table:
 
 ![](https://github.com/SukhmKang/passion-projects/blob/main/Venmo%20paymentLog.db.png)
 
@@ -166,6 +166,7 @@ ID: 74808842343309024
 Privacy: Public
 ======
 ```
+
 ### Filtering
 Like all other log commands (```friendLog```, ```personalLog```, ```requestLog```), the ```globalLog``` also allows users to input optional input to filter the data presented in the log. Users have the option to apply (and even stack) any of the following filters: 
 
@@ -202,6 +203,41 @@ Message: hi
 ID: 74808842343309024
 Privacy: Public
 ======
+```
+
+COMMAND:
+
+```
+python3 venmo.py requestlog ashley -range 20-50
+```
+
+OUTPUT:
+```
+===============
+PENDING REQUEST
+KYRA requested $49.00 from ASHLEY
+Date: 2022-01-05 14:47:07
+Message: present forgot choice
+ID: -8828219609105870469
+Tag: food
+===============
+
+===============
+ACCEPTED REQUEST
+MIRANDA accepted ASHLEY's request for $28.00
+Date: 2022-01-05 14:47:07
+Message: visitor ring fed contrast
+ID: -4572332181465126335
+===============
+
+===============
+CANCELLED REQUEST
+ASHLEY cancelled their request for $34.00 from COEN
+Date: 2022-01-05 14:47:07
+Message: smaller
+ID: -6263499498269279458
+Tag: groceries
+===============
 ```
 
 ### User Profiles
@@ -276,7 +312,7 @@ https://www.linkedin.com/in/sukhm-kang
 Computer Science & Business @ University of California, Berkeley\
 https://www.linkedin.com/in/ishanbalakrishnan
 
-Feel free to reach out to either one of us by email @ ishan.balakrishnan(at)berkeley.edu or sukhm.kang(at)uchicago.edu! 
+Feel free to reach out to either one of us by email @ ishan.balakrishnan(at)berkeley.edu or sukhmkang(at)uchicago.edu! 
 
 ## Acknowledgments
 
