@@ -30,6 +30,7 @@ def passwordchecker(userID,password,cursor):
     correctpassword = str(''.join(cursor.fetchone()))
     if password != correctpassword:
         print("Error: Incorrect password.")
+        print("======\nPassword requirements: At least 8 characters length, including at least one uppercase letter, one lowercase letter, and one number.")
         return False
     return True
 
@@ -335,9 +336,10 @@ def pay(senderID,recipientID,amount,message,cursor,tag=None,privacy=None):
     cursor.execute(''' UPDATE users SET fees = fees + ? WHERE username=? ''',(fee,recipientID))
     cursor.execute(''' INSERT INTO paymentLog (senderID, recipientID, amount, status, date, message, paymentID, privacy, tag, senderBalance, recipientBalance)
     VALUES (?,?,?,?,?,?,?,?,?,?,?) ''',(senderID,recipientID,amount,"_payment",datetime.now(),message.strip('"'),paymentID,privacy,tag,senderBalance,recipientBalance))
-    print(f"Successfuly paid {recipientID} ${amount}!")
+    twodecimalformatting = "{:.2f}"
+    print(f"Successfuly paid {recipientID} ${twodecimalformatting.format(amount)}!")
     if fee > 0:
-        print(f"{recipientID} was charged a {accountType} account fee of ${fee} for this transaction, so ${amount-fee} was added to their balance.")
+        print(f"{recipientID} was charged a {accountType} account fee of ${twodecimalformatting.format(fee)} for this transaction, so ${twodecimalformatting.format(amount-fee)} was added to their balance.")
     return True
 
 def linkbank(userID, bankID, cursor):
@@ -387,6 +389,9 @@ def override(userID, password, bankID, cursor):
         print("Error: Attempting to override with the same ID.")
     if bankcheck(bankID):
         cursor.execute( ''' UPDATE users SET bank=? WHERE username=?''',(bankID,userID))
+    
+    print(f"Successfully changed {userID}'s bank from {oldbank} to {bankID}.")
+    
 
 def request(userID, friendID,amount,message,cursor,tag=None):
     #checks if user exists
@@ -425,11 +430,18 @@ def request(userID, friendID,amount,message,cursor,tag=None):
     if not limitenforcer(userID, "request", amount, cursor):
         return
 
+    if tag != None and tag.lower().strip() not in tags:
+        print(f"Error: Invalid tag. Valid tags are:\n {tags}")
+        return False
+
     #generates requestID
     requestID = hash(str(userID)+str(friendID)+str(message)+str(datetime.now()))
 
     cursor.execute(''' INSERT INTO paymentLog (senderID, recipientID, amount, status, date, message, paymentID, privacy, tag, senderBalance, recipientBalance)
-    VALUES (?,?,?,?,?,?,?,?,?,?,?) ''',(friendID,userID,amount,"request",datetime.now(),message,requestID,None,tag,None,None))
+    VALUES (?,?,?,?,?,?,?,?,?,?,?) ''',(friendID,userID,amount,"request",datetime.now(),message.strip('"'),requestID,None,tag,None,None))
+    twodecimalformatting = "{:.2f}"
+    amount = twodecimalformatting.format(amount)
+    print(f"Successfully requested ${amount} from {friendID}.")
 
     return
 
@@ -593,6 +605,8 @@ def deposit(userID, amount, cursor):
     userBalance = getbalance(userID,cursor)
     userBalance += amount
     cursor.execute( ''' UPDATE users SET balance=? WHERE username =?''',(userBalance,userID))
+    twodecimalformatting = "{:.2f}"
+    print(f"Successfully deposited ${twodecimalformatting.format(amount)} in {userID}'s account from bank {bankID}.")
     return
 
 def verify(userID,password,SSN,cursor):
@@ -760,6 +774,8 @@ def unfriend(userID, friendID, cursor):
     friendsFriends = ''.join(cursor.fetchone())
     if userID in friendsFriends:
         unfriend(friendID, userID, cursor)
+    
+    print(f"{userID} and {friendID} are no longer friends.")
 
 def checkpassword(password):
     checks = [False,False,False,False]
@@ -811,6 +827,7 @@ def setprivacy(userID, privacy, cursor):
         return
     
     cursor.execute( ''' UPDATE users SET privacy=? WHERE username=?''',(privacy,userID))
+    print(f"Successfully set {userID}'s privacy to {privacy}.")
     
 
 def updateprivacy(userID, password, privacy, cursor):
@@ -926,7 +943,7 @@ def globallog(cursor,userID,below=False,above=False,sender=False,recipient=False
         print("The global log is currently empty. There are no records of Public transactions.")
         return
     else:
-        stuffhasbeenprinted = False
+        notemptylog = False
         counter = 1
         for elem in log:
             #get the paymentID
@@ -1027,10 +1044,9 @@ def globallog(cursor,userID,below=False,above=False,sender=False,recipient=False
             #printing the payment to the log
             print("======")
             twodecimalformatting = "{:.2f}"
-            if cond3:
-                print(f"{senderID.upper()} paid {recipientID.upper()} ${twodecimalformatting.format(amount)}")
-            else:
-                print(f"{senderID.upper()} paid {recipientID.upper()}")
+            print(f"{senderID.upper()} paid {recipientID.upper()} ${twodecimalformatting.format(amount)}")
+            date = str(date)
+            date = date[0:19]
             print(f"Date: {date}")
             print(f"Message: {message}")
             print(f"ID: {paymentID}")
@@ -1039,22 +1055,91 @@ def globallog(cursor,userID,below=False,above=False,sender=False,recipient=False
             if tag != None:
                 print(f"Tag: {tag}")
             print("======\n")
-            stuffhasbeenprinted = True
+            notemptylog = True
 
             counter += 1
-    if not stuffhasbeenprinted:
+    if not notemptylog:
         print("======")
         print("No recorded payments were found matching the provided filters.")
         print("======\n")
 
 
-def friendlog(argv):
+def friendlog(cursor,userID,friendID,below=False,above=False,sender=False,recipient=False,olddate=False,messagefilter=False,rangeupper=False,rangelower=False,tagfilter=False,messagecontains=False):
+    if not validateuser(userID,cursor):
+        return
+    if not friendchecker(userID,friendID,cursor):
+        return
+    cursor.execute(''' SELECT senderID, recipientID, amount, date, message, paymentID, privacy, tag FROM paymentLog WHERE ((senderID=? OR recipientID=?) AND status=? AND (privacy=? OR privacy=?))
+    OR (status=? AND (senderID=? OR recipientID=?) AND (senderID=? OR recipientID=?)) ''',(friendID,friendID,"_payment","Public","Friends Only","_payment",friendID,friendID,userID,userID))
+    log = cursor.fetchall()
+    if (log == None):
+        print(f"There are no transactions in the system involving {friendID}.")
+        return
+    notemptylog = False
+    for elem in log:  
+        senderID = elem[0]
+        recipientID = elem[1]
+        amount = elem[2]
+        date = elem[3]
+        message = elem[4]
+        paymentID = elem[5]
+        privacy = elem[6]
+        tag = elem[7]
+
+        #apply sender/recipient filters
+        if (sender != False) and (sender.lower() != senderID.lower()):
+            continue
+        if (recipient != False) and (recipient.lower() != recipientID.lower()):
+            continue
+
+        #apply message / messagecontains filters
+        if (messagefilter !=False) and (messagefilter.lower() != message.lower()):
+            continue
+
+        if (messagecontains != False) and (messagecontains.lower() not in message.lower()):
+            continue
+        
+        #apply date filter
+        if olddate!=False and (date < olddate):
+            continue
+
+        #apply tag filter False == None
+        if tagfilter !=False and (tag != tagfilter):
+            continue
+
+        #apply below/above/range filters
+        if below !=False and amount >= below:
+            continue
+
+        if above !=False and amount <= above:
+            continue
+
+        if (rangeupper != False) and (amount > rangeupper and amount < rangelower):
+            continue
+
+        #printing the payment to the log
+        print("=======")
+        twodecimalformatting = "{:.2f}"
+        print(f"{senderID.upper()} paid {recipientID.upper()} ${twodecimalformatting.format(amount)}")
+        date = str(date)
+        date = date[0:19]
+        print(f"Date: {date}")
+        print(f"Message: {message}")
+        print(f"ID: {paymentID}")
+        if privacy != None:
+            print(f"Privacy: {privacy}")
+        if tag != None:
+            print(f"Tag: {tag}")
+        print("=======\n")
+        notemptylog = True
+
+    if not notemptylog:
+        print("======")
+        print("No recorded payments were found matching the provided filters.")
+        print("======\n")
     return
 
 def personallog(argv):
-    return
-
-def transactionslog(argv):
     return
 
 def requestlog(argv):
@@ -1081,6 +1166,8 @@ def viewprofile(cursor, userID):
         print(f"@{userID.upper()} - √erified")
     else:
         print(f"@{userID.upper()} - unverified")
+    #Reformatting balance
+    balance = "{:.2f}".format(balance)
     print(f"${balance}")
     if numFriends == 0:
         print("No friends yet!") 
@@ -1089,22 +1176,35 @@ def viewprofile(cursor, userID):
     else:
         print(f"{numFriends} friends")
     if fees > 0:
+        #Reformatting fees
+        fees = "{:.2f}".format(fees)
         print(f"ƒees: ${fees}")
     print(f"joined {date}")
     print("==================")
     return
 
+
 ### INPUT VALIDATER ###
 
 def inputvalidater(argv,cursor):
-    command = argv[1]
+    if len(argv) == 1:
+        print("Please enter a command.")
+        print(f"Possible commands: {cmds}")
+        return
+
+    command = argv[1].lower()
     filters = ["-above","-below","-range","-days","-tags","-sender","-recipient","-message","-messagecontains"]
+    if command not in cmds:
+        print("Please enter a valid command.")
+        print(f"Possible commands: {cmds}")
+        return
+
     if command == "globallog":
         if len(argv) == 2:
             print("Usage: globallog userID [filters]")
             print(f"Possible filters: {filters}")
             return
-        userID = argv[2]
+        userID = argv[2].lower()
         if len(argv) == 3:
             globallog(cursor,userID)
             return
@@ -1266,3 +1366,387 @@ def inputvalidater(argv,cursor):
                     print("Error: Please enter message after -messagecontains.")
                     return
         globallog(cursor,userID,below,above,sender,recipient,olddate,message,rangeupper,rangelower,tag,messagecontains)
+        return
+    if command == "pay":
+        #function takes: pay senderID recipientID amount message cursor -tag -privacy
+        #venmo.py pay senderID recipientID amount message -tag -privacy
+        if len(argv) != 6 and len(argv) != 8 and len(argv) != 10:
+            print("Error: Incorrect usage of pay.")
+            print("Usage: venmo.py pay senderID recipientID amount message [-tag tag -privacy privacy]")
+            return
+        senderID = argv[2].lower()
+        recipientID = argv[3].lower()
+        amount = argv[4]
+        message = argv[5]
+        if len(argv) == 6:
+            pay(senderID,recipientID,amount,message,cursor)
+            return
+        privacy = None
+        tag = None
+        if len(argv) == 8:
+            if argv[6] != "-privacy" and argv[6] != "-tag":
+                print("Error: Incorrect usage of pay.")
+                print("Usage: venmo.py pay senderID recipientID amount message [-tag tag -privacy privacy]")
+                return
+            if argv[6] == "-privacy":
+                privacy = argv[7]
+            if argv[6] == "-tag": 
+                tag = argv[7]
+            pay(senderID,recipientID,amount,message,cursor,tag,privacy)
+        if len(argv) == 10:
+            for i in range(6,len(argv),1):
+                if argv[i] == "-privacy":
+                    if privacy != None:
+                        print("Error: You cannot use -privacy more than once.")
+                        return
+                    try:
+                        privacy = argv[i+1]
+                    except IndexError:
+                        print("Error: Incorrect usage of pay.")
+                        print("Usage: venmo.py pay senderID recipientID amount message [-tag tag -privacy privacy]")
+                        return
+                if argv[i] == "-tag":
+                    if tag != None:
+                        print("Error: You cannot use -tag more than once.")
+                        return
+                    try:
+                        tag = argv[i+1]
+                    except IndexError:
+                        print("Error: Incorrect usage of pay.")
+                        print("Usage: venmo.py pay senderID recipientID amount message [-tag tag -privacy privacy]")
+                        return
+            pay(senderID,recipientID,amount,message,cursor,tag,privacy)
+        return
+    if command == "request":
+        #request userID friendID amount message [-tag tag]
+        if len(argv) != 6 and len(argv) != 8:
+            print("Error: Incorrect usage of request.")
+            print("Usage: venmo.py request userID friendID amount message [-tag tag]")
+            return
+        senderID = argv[2].lower()
+        recipientID = argv[3].lower()
+        amount = argv[4]
+        message = argv[5]
+        if len(argv) == 6:
+            request(senderID,recipientID,amount,message,cursor)
+            return
+        if len(argv) == 8:
+            if argv[6] != "-tag":
+                print("Error: Incorrect usage of request.")
+                print("Usage: venmo.py request userID friendID amount message [-tag tag]")
+                return
+            request(senderID,recipientID,amount,message,cursor,argv[7])
+        return
+    if command == "acceptrequest":
+        #venmo.py acceptRequest senderID paymentID [-privacy privacy]
+        if len(argv) != 4 and len(argv) != 6:
+            print("Error: Incorrect usage of acceptrequest.")
+            print("Usage: venmo.py acceptrequest senderID paymentID [-privacy privacy]")
+            return
+        senderID = argv[2].lower()
+        paymentID = argv[3]
+        if len(argv) ==4:
+            acceptrequest(senderID,paymentID,cursor)
+            return
+        if argv[4] != "-privacy":
+            print("Error: Incorrect usage of acceptrequest.")
+            print("Usage: venmo.py acceptrequest senderID paymentID [-privacy privacy]")
+            return
+        privacy = argv[5]
+        acceptrequest(senderID,paymentID,cursor,privacy)
+        return
+    if command == "unrequest":
+        if len(argv) != 4:
+            print("Error: Incorrect usage of unrequest.")
+            print("Usage: venmo.py unrequest userID paymentID")
+            return
+        unrequest(argv[2].lower(),argv[3],cursor)
+    if command == "denyrequest":
+        if len(argv) != 4:
+            print("Error: Incorrect usage of denyrequest.")
+            print("Usage: denyrequest senderID paymentID")
+            return
+        denyrequest(argv[2].lower(),argv[3],cursor)
+        return
+    if command == "deposit":
+        if len(argv) != 4:
+            print("Error: Incorrect usage of deposit.")
+            print("Usage: deposit userID amount")
+            return
+        deposit(argv[2].lower(),argv[3],cursor)
+        return
+    if command == "transfer":
+        if len(argv) != 4 and len(argv) != 6:
+            print("Error: Incorrect usage of transfer.")
+            print('Usage: transfer userID amount [-type instant or -type "no fee"]')
+            return
+        if len(argv) == 4:
+            transfer(argv[2].lower(),argv[3],cursor)
+            return
+        if len(argv) == 6:
+            if argv[4] != "-type":
+                print("Error: Incorrect usage of transfer.")
+                print('Usage: transfer userID amount [-type Instant or -type "No Fee"]')
+                return
+            transfer(argv[2].lower(),argv[3],cursor,argv[5])
+            return
+    if command == "friend":
+        if len(argv) != 4:
+            print("Error: Incorrect usage of friend.")
+            print('Usage: friend userID friendID')
+            return
+        friend(argv[2].lower(),argv[3].lower(),cursor)
+        return
+    if command == "balance":
+        if len(argv) != 4:
+            print("Error: Incorrect usage of balance.")
+            print('Usage: balance userID friendID')
+            return
+        balance(argv[2].lower(),argv[3],cursor)
+
+    if command == "viewprofile":
+        if len(argv) != 3:
+            print("Error: Incorrect usage of viewprofile.")
+            print("Usage: viewprofile userID")
+            return
+        viewprofile(cursor, argv[2].lower())
+        return
+
+    if command == "transactionprivacy":
+        if len(argv) != 5:
+            print("Error: Incorrect usage of transactionprivacy.")
+            print("Usage: transactionPrivacy userID paymentID privacy")
+            return
+        transactionprivacy(argv[2].lower(),argv[3],argv[4], cursor)
+        return
+
+    if command == "setprivacy":
+        if len(argv) != 4:
+            print("Error: Incorrect usage of setprivacy.")
+            print("Usage: setprivacy userID privacy")
+            return
+        setprivacy(argv[2].lower(),argv[3], cursor)
+        return
+
+    if command == "updateprivacy":
+        if len(argv) != 5:
+            print("Error: Incorrect usage of updateprivacy.")
+            print("Usage: updateprivacy userID password privacy")
+            return
+        updateprivacy(argv[2].lower(),argv[3],argv[4],cursor)
+        return
+
+    if command == "unfriend":
+        if len(argv) != 4:
+            print("Error: Incorrect usage of unfriend.")
+            print("Usage: unfriend userID friendID")
+            return
+        unfriend(argv[2].lower(),argv[3].lower(), cursor)
+        return
+
+    if command == "verify":
+        if len(argv) != 5:
+            print("Error: Incorrect usage of verify.")
+            print("Usage: verify userID password SSN")
+            return
+        verify(argv[2].lower(),argv[3],argv[4],cursor)
+        return
+
+    if command == "linkbank":
+        if len(argv) != 4:
+            print("Error: Incorrect usage of linkbank.")
+            print("Usage: linkbank userID bankID")
+            return
+        linkbank(argv[2].lower(),argv[3],cursor)
+        return
+
+    if command == "override":
+        if len(argv) != 5:
+            print("Error: Incorrect usage of override.")
+            print("Usage: override userID password bankID")
+            return
+        override(argv[2].lower(),argv[3],argv[4],cursor)
+        return
+
+    if command == "adduser":
+        if len(argv) != 5:
+            print("Error: Incorrect usage of adduser.")
+            print("Usage: adduser userID password accounttype")
+            return
+        adduser(argv[2].lower(),argv[3],argv[4],cursor)
+        return
+    if command == "friendlog":
+        if len(argv) == 2:
+            print("Usage: friendlog userID friendID [filters]")
+            print(f"Possible filters: {filters}")
+            return
+
+        if len(argv) == 3:
+            print("Usage: friendlog userID friendID [filters]")
+            print(f"Possible filters: {filters}")
+            return
+        userID = argv[2].lower()
+        friendID = argv[3].lower()
+
+        if len(argv) == 4:
+            friendlog(cursor,userID,friendID)
+            return
+        above = False
+        below = False
+        olddate = False
+        rangeupper = False
+        rangelower = False
+        tag = False
+        sender = False
+        recipient = False
+        message = False
+        messagecontains = False
+
+        if argv[4] not in filters:
+            print("Error: Invalid filter.")
+            print("Usage: globallog userID [filters]")
+            print(f"Possible filters: {filters}")
+            return
+
+        for i in range(4,len(argv),1):
+            if argv[i] == "-above":
+                if below != False:
+                    print("Error: You cannot use -above and -below simultaneously.")
+                    return
+                if above != False:
+                    print("Error: You cannot use -above more than once.")
+                    return
+                try:
+                    above = argv[i+1]
+                except IndexError:
+                    print("Error: Please enter an amount after -above.")
+                    return
+                try:
+                    above = float(above)
+                    if above <0:
+                        print("Error: You cannot enter an amount lower than 0.")
+                        return
+                except ValueError:
+                    print("Error: Please enter a numerical amount after -above.")
+                    return
+                
+            if argv[i] == "-below":
+                if above != False:
+                    print("Error: You cannot use -above and -below simultaneously.")
+                    return
+                if below != False:
+                    print("Error: You cannot use -below more than once.")
+                    return
+                try:
+                    below = argv[i+1]
+                except IndexError:
+                    print("Error: Please enter an amount after -below.")
+                    return
+                try:
+                    below = float(below)
+                except ValueError:
+                    print("Error: Please enter a numerical amount after -below.")
+                    return
+                if below <= 0:
+                    print("Error: Amount below must be greater than 0.")
+                    return
+            if argv[i] == "-range":
+                if rangeupper != False:
+                    print("Error: You cannot use -range more than once.")
+                    return
+                try:
+                    numberrange = argv[i+1]
+                except IndexError:
+                    print("Error: Please enter an interval (Example: 1-100) after -range.")
+                    return
+                if re.match("\\d+-\\d+",numberrange) == None:
+                    print("Error: Please enter an interval (Example: 1-100) after -range.")
+                    return
+                numberrange = numberrange.split("-")                
+                rangelower = float(numberrange[0])
+                rangeupper = float(numberrange[1])
+                if rangelower >= rangeupper:
+                    print("Error: Invalid interval range. Upper bound of range must exceed the lower bound.")
+            if argv[i] == "-days":
+                if olddate != False:
+                    print("Error: You cannot use -days more than once.")
+                    return
+                
+                try:
+                    days = argv[i+1]
+                except IndexError:
+                    print("Error: Please enter a number of days after -days.")
+                    return
+                try:
+                    days = int(days)
+                except ValueError:
+                    print("Error: Please enter an integer amount of days after -days.")
+                    return
+                if days <= 0:
+                    print("Error: Amount of days must be at least one.")
+                    return
+                
+                #get the date from when the user wants 
+                olddate = datetime.now() - timedelta(days)
+        
+            if argv[i] == "-tags":
+                if tag != False:
+                    print("Error: You cannot use -tags more than once.")
+                    return
+
+                try:
+                    tag = argv[i+1]
+                except IndexError:
+                    print("Error: Please enter tag after -tags.")
+                    return
+                try:
+                    tag = tag.lower()
+                except SyntaxError:
+                    print("Error: Please enter a valid tag. Valid tags are:\n {tags}")
+                    return
+                if tag.lower() not in tags:
+                    print(f"Error: Invalid tag. Valid tags are:\n {tags}")
+                    return
+
+            if argv[i] == "-sender":
+                if sender != False:
+                    print("Error: You cannot use -sender more than once.")
+                    return
+                try:
+                    sender = argv[i+1]
+                except IndexError:
+                    print("Error: Please enter sender after -sender.")
+                    return
+
+
+            if argv[i] == "-recipient":
+                if recipient != False:
+                    print("Error: You cannot use -recipient more than once.")
+                    return
+                try:
+                    recipient = argv[i+1]
+                except IndexError:
+                    print("Error: Please enter recipient after -recipient.")
+                    return
+
+            if argv[i] == "-message":
+                if message != False:
+                    print("Error: You cannot use -message more than once.")
+                    return
+                try:
+                    message = argv[i+1]
+                except IndexError:
+                    print("Error: Please enter message after -message.")
+                    return
+
+            if argv[i] == "-messagecontains":
+                if messagecontains != False:
+                    print("Error: You cannot use -message more than once.")
+                    return
+                try:
+                    messagecontains = argv[i+1]
+                except IndexError:
+                    print("Error: Please enter message after -messagecontains.")
+                    return
+        friendlog(cursor,userID,friendID,below,above,sender,recipient,olddate,message,rangeupper,rangelower,tag,messagecontains)
+        return
