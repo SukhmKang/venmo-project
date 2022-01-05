@@ -115,7 +115,7 @@ COMMAND:
 ```
 python3 venmo.py globallog ishan
 ```
-This command will print the ```globallog``` viewable for a given userID. In other words, all payments that are set to ```"Public"``` or are ```Friends Only``` and include one of userID's friends or are ```Private``` but involve the userID as a sender or recipient, will be logged. 
+This command will print the ```globallog``` viewable for a given userID. In other words, all payments that are set to ```"Public"``` or are ```"Friends Only"``` and include one of userID's friends or are ```"Private"``` but involve the userID as a sender or recipient, will be logged. 
 
 OUTPUT:
 ```
