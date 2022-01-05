@@ -19,7 +19,7 @@ with open ("commands.txt","r") as commands:
         #turns each line of commands into a list
         stripped_line = stripped_line.split(",")
         #passes command into input validater
-        #inputvalidater(stripped_line,cursor)
+        inputvalidater(stripped_line,cursor)
 
 #accepts command line input here
 inputvalidater(sys.argv,cursor)
