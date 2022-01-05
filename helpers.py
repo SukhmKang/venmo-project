@@ -304,8 +304,9 @@ def pay(senderID,recipientID,amount,message,cursor,tag=None,privacy=None):
         else:
             privacy = "Public"
     else:
-            print("======\nError: Invalid privacy setting.\nNote: Privacy options include:\nPrivate\nFriends Only\nPublic\n======")
-            return False
+        print(privacy)
+        print("======\nError: Invalid privacy setting.\nNote: Privacy options include:\nPrivate\nFriends Only\nPublic\n======")
+        return False
 
     if tag != None and tag.lower().strip() not in tags:
         print(f"Error: Invalid tag. Valid tags are:\n {tags}")
@@ -1303,15 +1304,15 @@ def requestlog(cursor,userID,below=False,above=False,incoming=False,outgoing=Fal
         twodecimalformatting = "{:.2f}"
         if status == "request":
             print("PENDING REQUEST")
-            print(f"{recipientID.upper()} requested {twodecimalformatting.format(amount)} from {senderID.upper()}")
+            print(f"{recipientID.upper()} requested ${twodecimalformatting.format(amount)} from {senderID.upper()}")
         elif status == "accepted_request":
-            print(f"{senderID.upper()} accepted {recipientID.upper()}'s request for {twodecimalformatting.format(amount)}")
+            print(f"{senderID.upper()} accepted {recipientID.upper()}'s request for ${twodecimalformatting.format(amount)}")
         elif status == "denied_request":
             print("DENIED REQUEST")
-            print(f"{senderID.upper()} denied {recipientID.upper()}'s request for {twodecimalformatting.format(amount)}")
+            print(f"{senderID.upper()} denied {recipientID.upper()}'s request for ${twodecimalformatting.format(amount)}")
         elif status == "cancelled_request":
             print("CANCELLED REQUEST")
-            print(f"{recipientID.upper()} requested {twodecimalformatting.format(amount)} from {senderID.upper()}")
+            print(f"{recipientID.upper()} cancelled their request for ${twodecimalformatting.format(amount)} from {senderID.upper()}")
         date = str(date)
         date = date[0:19]
         print(f"Date: {date}")
@@ -1577,7 +1578,7 @@ def inputvalidater(argv,cursor):
                 print("Usage: venmo.py pay senderID recipientID amount message [-tag tag -privacy privacy]")
                 return
             if argv[6] == "-privacy":
-                privacy = argv[7]
+                privacy = argv[7].replace('"',"")
             if argv[6] == "-tag": 
                 tag = argv[7]
             pay(senderID,recipientID,amount,message,cursor,tag,privacy)
@@ -1588,7 +1589,7 @@ def inputvalidater(argv,cursor):
                         print("Error: You cannot use -privacy more than once.")
                         return
                     try:
-                        privacy = argv[i+1]
+                        privacy = argv[i+1].replace('"',"")
                     except IndexError:
                         print("Error: Incorrect usage of pay.")
                         print("Usage: venmo.py pay senderID recipientID amount message [-tag tag -privacy privacy]")
@@ -1640,7 +1641,7 @@ def inputvalidater(argv,cursor):
             print("Error: Incorrect usage of acceptrequest.")
             print("Usage: venmo.py acceptrequest senderID paymentID [-privacy privacy]")
             return
-        privacy = argv[5]
+        privacy = argv[5].replace('"',"")
         acceptrequest(senderID,paymentID,cursor,privacy)
         return
     if command == "unrequest":
