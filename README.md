@@ -1,6 +1,6 @@
 # Venmo Python Project
 
-This project attempts to mimic several of the core commands present in the Venmo application (https://venmo.com/), while managing a central database of user information ([users.db](# user-database-users.db)) and recording transaction histories ([paymentLog.db](#transactions-database:-paymentlog.db))of the users within the ecosystem. The purpose of this project was to explore the ways a company like Venmo manages a major database while retrieving information from it to perform several commands in a faste and space-efficient way.
+This project attempts to mimic several of the core commands present in the Venmo application (https://venmo.com/), while managing a central database of user information ([users.db](#user-database-usersdb)) and recording transaction histories ([paymentLog.db](#transactions-database-paymentlogdb))of the users within the ecosystem. The purpose of this project was to explore the ways a company like Venmo manages a major database while retrieving information from it to perform several commands in a faste and space-efficient way.
 
 
 ## Built With
@@ -24,7 +24,7 @@ cmds = ["pay","linkbank","override","request","transfer","deposit","acceptreques
 
 ## Example Database
 
-### User Database users.db
+### User Database: users.db
 
 Here is an example of users.db:
 
