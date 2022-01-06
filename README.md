@@ -117,53 +117,74 @@ Here is an example of our paymentLog table:
 
 Here is an example of the output printed by specific commands in our program once the payment system is loaded using Commands.txt (a starter script which generates users and performs several transactions).
 
-COMMAND:
+**COMMAND:**
 
 ```
-python3 venmo.py globallog ishan
+python3 venmo.py globallog Lukas
 ```
 This command will print the ```globallog``` viewable for a given userID. In other words, all payments that are set to ```"Public"``` or are ```"Friends Only"``` and include one of userID's friends or are ```"Private"``` but involve the userID as a sender or recipient, will be logged. 
 
-OUTPUT:
+**OUTPUT:**
 ```
 ======
-SUKHM paid ISHAN $100.00
-Date: 2022-01-04 16:03:12
-Message: hi
-ID: 8402874417959245168
+CADENCE paid LEIGHTON $39.00
+Date: 2022-01-05 19:24:25
+Message: neighbor
+ID: 4912021424446041479
+Privacy: Public
+Tag: gas
+======
+
+======
+NATHALIA paid RAYMOND $32.00
+Date: 2022-01-05 19:24:25
+Message: wrote near arrange gray
+ID: -5995160770132735197
+Privacy: Public
+======
+
+======
+ELISHA paid LEIGHTON $17.00
+Date: 2022-01-05 19:24:25
+Message: seeing image include friendly face
+ID: 8785650049271825540
+Privacy: Public
+======
+
+======
+RAYMOND paid JAYCE $2.00
+Date: 2022-01-05 19:24:25
+Message: already brief reach
+ID: -150183031060747061
+Privacy: Friends Only
+Tag: sports
+======
+
+======
+LUPITA paid RAYMOND $33.00
+Date: 2022-01-05 19:24:25
+Message: related him mouth carried badly
+ID: 4281393501062655380
+Privacy: Friends Only
+Tag: drinks
+======
+
+======
+LUPITA paid ESTEFANIA $40.00
+Date: 2022-01-05 19:24:25
+Message: quick wing repeat minute matter
+ID: 235882096320024938
+Privacy: Friends Only
+Tag: fun
+======
+
+======
+CHARLEY paid LUKAS $4.00
+Date: 2022-01-05 19:24:25
+Message: tune
+ID: 7830547338156538219
 Privacy: Private
-======
-
-======
-SUKHM paid ISHAN $4.00
-Date: 2022-01-04 16:03:12
-Message: hi
-ID: -4307748576687562439
-Privacy: Private
-======
-
-======
-BOB paid ROB $0.01
-Date: 2022-01-04 16:03:12
-Message: haha
-ID: -4058719667198402045
-Privacy: Public
-======
-
-======
-ROB paid BOB $1.00
-Date: 2022-01-04 16:03:12
-Message: hi
-ID: 3306642345074302835
-Privacy: Public
-======
-
-======
-ROB paid WILL $11.00
-Date: 2022-01-04 16:03:12
-Message: hi
-ID: 74808842343309024
-Privacy: Public
+Tag: drinks
 ======
 ```
 
@@ -183,35 +204,38 @@ Like all other log commands (```friendLog```, ```personalLog```, ```requestLog``
 **```-messagecontaints```** filters payments keeping only the transactions that have a payment message which includes a certain string
 
 
-Let's say a user may want to use the -range and -sender filters to specify a payment with an amount between $5 and $15 sent by Rob. 
+Let's say a user may want to use the -above and -sender filters to specify a payment with an amount above $35 sent by Lupita. 
 
 To do this, the user would input the following command:
 
-COMMAND:
+**COMMAND:**
 
 ```
-python3 venmo.py globallog ishan -sender rob -range 5-15
+python3 venmo.py globallog Lukas -sender Lupita -above 35
 ```
 This command will print the new ```globallog``` after applying the specific filters. After the filtering, only one payment remains in the log.
 
-OUTPUT:
+**OUTPUT:**
 ```
 ======
-ROB paid WILL $11.00
-Date: 2022-01-04 16:03:12
-Message: hi
-ID: 74808842343309024
-Privacy: Public
+LUPITA paid ESTEFANIA $40.00
+Date: 2022-01-05 19:24:25
+Message: quick wing repeat minute matter
+ID: 235882096320024938
+Privacy: Friends Only
+Tag: fun
 ======
 ```
 
-COMMAND:
+Users can also use the **```requestlog```** to view incoming and outgoing requests, including their respective request status (ccepted, denied, pending, or cancelled).
+
+**COMMAND:**
 
 ```
 python3 venmo.py requestlog ashley -range 20-50
 ```
 
-OUTPUT:
+**OUTPUT:**
 ```
 ===============
 PENDING REQUEST
@@ -240,52 +264,212 @@ Tag: groceries
 ===============
 ```
 
+Users can also use the **```friendlog```** to see specific transactions involving one of their friends (similar to the transaction history that a user sees on Venmo after clicking on a friend's profile:
+
+**COMMAND:**
+
+```
+python3 venmo.py friendlog ashley -range 20-50
+```
+
+**OUTPUT:**
+```
+=======
+ELIZA paid MARCELLO $10.00
+Date: 2022-01-05 19:32:37
+Message: expect thick hand tropical
+ID: 646440887148715387
+Privacy: Public
+Tag: food
+=======
+
+=======
+ELIZA paid ALEXA $22.00
+Date: 2022-01-05 19:32:37
+Message: using
+ID: -3226112198171525621
+Privacy: Friends Only
+Tag: sports
+=======
+
+=======
+KAYSEN paid ELIZA $16.00
+Date: 2022-01-05 19:32:37
+Message: already greatest clock character
+ID: 7255611750700585485
+Privacy: Public
+Tag: rent
+=======
+
+=======
+JOVIE paid ELIZA $36.00
+Date: 2022-01-05 19:32:37
+Message: sweet our taken deep base
+ID: -6666593477264811232
+Privacy: Public
+Tag: business
+=======
+
+=======
+FOSTER paid ELIZA $3.00
+Date: 2022-01-05 19:32:37
+Message: shinning court volume
+ID: 8977508245405188969
+Privacy: Public
+Tag: food
+=======
+
+=======
+ELIZA paid LUKAS $3.00
+Date: 2022-01-05 19:32:37
+Message: stepped bridge all boy idea
+ID: 1399052944502408428
+Privacy: Public
+=======
+```
+
+The last log users can access is the **```personallog```** which tracks all of a user's own transactions, including their bank transfers. 
+
+**COMMAND:**
+
+```
+python3 venmo.py friendlog ashley -range 20-50
+```
+
+**OUTPUT:**
+```
+=======
+LUKAS paid RAYMOND $4.00
+Date: 2022-01-05 19:39:20
+Message: mine party running rabbit
+ID: 1876582270564654817
+Privacy: Public
+Tag: tickets
+=======
+
+=======
+FLORA paid LUKAS $40.00
+Date: 2022-01-05 19:39:20
+Message: buried
+ID: 8027349983504459532
+Privacy: Friends Only
+Tag: fun
+=======
+
+=======
+LUKAS transferred $888.00 to bank 867410893
+No Fee Transfer
+Date: 2022-01-05 19:38:15
+ID: 1468992921269261560
+=======
+
+=======
+LUKAS paid FOSTER $44.00
+Date: 2022-01-05 19:39:21
+Message: operation
+ID: 2006268989207569363
+Privacy: Public
+Tag: sports
+=======
+
+=======
+LUPITA paid LUKAS $34.00
+Date: 2022-01-05 19:39:21
+Message: broad frequently frozen leg three
+ID: 8873442707971198000
+Privacy: Friends Only
+Tag: drinks
+=======
+
+=======
+LUKAS transferred $798.00 to bank 867410893
+Instant Transfer
+Date: 2022-01-05 19:38:50
+ID: -8942518831985827823
+=======
+
+=======
+CHARLEY paid LUKAS $4.00
+Date: 2022-01-05 19:39:21
+Message: tune
+ID: 5617351941942471040
+Privacy: Private
+Tag: drinks
+=======
+```
+
+If Lukas  wanted to see just the balance transfers made to their bank, they could apply the ```-type``` filter and select to show only transfers. This would log just the two transfers Lukas made.
+
+**COMMAND:**
+
+```
+python3 venmo.py personallog lukas -type transfers
+```
+
+**OUTPUT:**
+```
+=======
+LUKAS transferred $888.00 to bank 867410893
+No Fee Transfer
+Date: 2022-01-05 19:38:15
+ID: 1468992921269261560
+=======
+
+=======
+LUKAS transferred $798.00 to bank 867410893
+Instant Transfer
+Date: 2022-01-05 19:38:50
+ID: -8942518831985827823
+=======
+
+```
+
 ### User Profiles
 User profiles showcase several important attributes of a Venmo user, as saved in the ([users.db](#user-database-usersdb)) or calculated from the ([paymentLog.db](#transactions-database-paymentlogdb)). This includes the user's userID, balance, verification status, number of friends, date of account creation, and total fees paid.
 
-COMMAND:
+**COMMAND:**
 
 ```
 python3 venmo.py userprofile ariana
 ```
 
-OUTPUT:
+**OUTPUT:**
 ```
 ==================
 VENMO User Profile
 ==================
 @ARIANA - √erified
-$700.00
-1 friend
+$740.90
+67 friend
 joined 2022-01-04
 ==================
 ```
 
-COMMAND:
+**COMMAND:**
 
 ```
 python3 venmo.py userprofile john
 ```
 
-OUTPUT:
+**OUTPUT:**
 ```
 ==================
 VENMO User Profile
 ==================
 @JOHN - unverified
-$0.00
-11 friends
+$2.31
+41 friends
 joined 2022-01-04
 ==================
 ```
 
-COMMAND:
+**COMMAND:**
 
 ```
 python3 venmo.py userprofile bob
 ```
 
-OUTPUT:
+**OUTPUT:**
 ```
 ==================
 VENMO User Profile
