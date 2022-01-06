@@ -1,4 +1,5 @@
 # Venmo Python Project
+**By Ishan Balakrishnan & Sukhm Kang**
 
 This project attempts to mimic several of the core commands present in the Venmo application (https://venmo.com/), while managing a central database of user information ([users table](#user-database-usersdb)) and recording transaction histories ([paymentLog table](#transactions-database-paymentlogdb)) for users within the payment ecosystem. The purpose of this project was to explore the ways a company like Venmo manages a major database while retrieving information from its databases to perform a multitude of commands in a fast and space-efficient way.
 
