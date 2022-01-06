@@ -269,7 +269,7 @@ Users can also use the **```friendlog```** to see specific transactions involvin
 **COMMAND:**
 
 ```
-python3 venmo.py friendlog ashley -range 20-50
+python3 venmo.py friendlog eliza -below 40
 ```
 
 **OUTPUT:**
@@ -333,7 +333,7 @@ The last log users can access is the **```personallog```** which tracks all of a
 **COMMAND:**
 
 ```
-python3 venmo.py friendlog ashley -range 20-50
+python3 venmo.py personallog lukas
 ```
 
 **OUTPUT:**
