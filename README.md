@@ -1,7 +1,7 @@
-# Venmo Python Project
+# Venmo.py
 **By Ishan Balakrishnan & Sukhm Kang**
 
-This project attempts to mimic several of the core commands present in the Venmo application (https://venmo.com/), while managing a central database of user information ([users table](#user-database-usersdb)) and recording transaction histories ([paymentLog table](#transactions-database-paymentlogdb)) for users within the payment ecosystem. The purpose of this project was to explore the ways a company like Venmo manages a major database while retrieving information from its databases to perform a multitude of commands in a fast and space-efficient way.
+This project attempts to mimic several of the core commands present in the Venmo application (https://venmo.com/), while managing a central database of user information ([users table](#user-database-usersdb)) and recording transaction histories ([paymentLog table](#transactions-database-paymentlogdb)) for users within the payment ecosystem. The purpose of this project was to explore the ways a company like Venmo manages a major database while retrieving information from its databases to perform a multitude of commands in a way that optimizes for efficient runtime and storage.
 
 <img src="https://github.com/SukhmKang/passion-projects/blob/main/Venmo.py%20Image.png" width="350">
 
@@ -14,7 +14,7 @@ This project attempts to mimic several of the core commands present in the Venmo
 
 ### Overview
 
-Our project enables users to create and operate accounts within an environment similar to Venmo's. These commands will allow users to friend users, complete transactions (pay, request, deposit, transfer, etc.), configure settings, and view logs of transactions within their Venmo ecosystem.
+Our project enables users to create and operate accounts within a payment environment similar to Venmo's. These commands will allow users to friend users, complete transactions (pay, request, deposit, transfer, etc.), configure settings, and view filterable logs of transactions within their Venmo ecosystem.
 
 Users have access to several commands including:
 ```
@@ -45,13 +45,13 @@ Description: The override command allows a user to change their bank settings an
 Description: The request command allows a user to request a payment from another user in the payment ecosystem. Every request includes an amount and request message (taken as input from the requester), and a date and requestID (calculated by our program). Senders have the option to specify a ```-tag``` for the request. Once the request is sent, the requested user will be able to ```acceptrequest``` or ```denyrequest```, and the requester will always have the option to ```unrequest```.
 
 **```venmo.py transfer userID amount [-type instant or -type "no fee"]```**\
-Description:
+Description: The transfer command allows a user to transfer money out of their Venmo balance and into their bank account. Just like in Venmo, users have two options when initiating a transfer: "instant" and "no fee." If no option is selected, by default the transfer will be a "no fee" transaction. Transfers are viewable in a user's ```personallog``` and fees paid are tracked on a user's profile (accessible using the ```viewprofile``` command).
 
 **```venmo.py deposit userID amount```**\
-Description:
+Description: The deposit command allows users to deposit money into their Venmo balance (it is the opposite of the ```transfer``` command). To deposit money into their Venmo account, a user must first execute the ```linkbank``` and ```verify``` commands.
 
 **```venmo.py acceptrequest senderID paymentID [-privacy privacy]```**\
-Description:
+Description: The acceptrequest command allows users to accept incoming payment requests that have been sent by one of their Venmo friends. Users have the option to select a ```privacy``` for the transaction when accepting a request. If no privacy is selected, the payment will use the default privacy settings selected by the requester and the sender.
 
 **```venmo.py unrequest userID paymentID```**\
 Description:
