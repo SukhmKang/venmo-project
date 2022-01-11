@@ -441,7 +441,7 @@ VENMO User Profile
 ==================
 @ARIANA - √erified
 $740.90
-67 friend
+67 friends
 joined 2022-01-04
 ==================
 ```
