@@ -1,0 +1,21 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    Welcome!
+{% endblock %}
+
+{% block main %}
+<p>
+    <h1>
+Welcome!</h1>
+</p>
+<div class="container-fluid">
+
+<blockquote class="blockquote">
+<p>You currently have ${{ currentbalance }} virtual dollars of cash.</p>
+<p>You don't have any stocks in your portfolio. <a href="/buy">Make some investments</a>!</p>
+<p>Click <a href="/quote">here</a> to get a quote for your investment.</p>
+</blockquote>
+</div>
+
+{% endblock %}

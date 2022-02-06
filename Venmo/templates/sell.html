@@ -1,0 +1,26 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    Sell
+{% endblock %}
+
+{% block main %}
+<h3>
+    Select which stock to sell and how many you would like to sell.
+</h3>
+
+    <form action="/sell" method="post">
+
+        <select name="symbol">
+            <option disabled selected value="">Stock Name</option>
+                        {% for stockk in range(lengthh)%}
+                        <option value = "{{ listt_norepeats[stockk] }}">{{ listt_norepeats[stockk] }}</option>
+                        {% endfor %}
+        </select>
+        <div class="form-group">
+            <input autocomplete="off" autofocus class="form-control" name="shares" placeholder="Number of Shares" type="text">
+        </div>
+            <button class="btn btn-primary" type="submit">Sell</button>
+        </form>
+
+{% endblock %}

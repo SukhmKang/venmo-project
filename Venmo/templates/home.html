@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html>
+
+  {% extends "layout.html" %}
+
+  {% block title %}
+      Homepage
+  {% endblock %}
+  
+
+{% block main %}
+<body>
+
+
+<div class="row">
+  <div class="col-sm-7">
+    <div class="card">
+      <div class="card-body">
+        <h5 class="card-title">Special title treatment</h5>
+        <p class="card-text">With supporting text below as a naturaBy November 1932, the Nazi Party held the most seats in the German Reichstag, but did not have a majority. As a result, no party was able to form a majority parliamentary coalition in support of a candidate for chancellor. Former chancellor Franz von Papen and other conservative leaders persuaded President Paul von Hindenburg to appoint Hitler as chancellor on 30 January 1933. Shortly after, the Reichstag passed the Enabling Act of 1933 which began the process of transforming the Weimar Republic into Nazi Germany, a one-party dictatorship based on the totalitarian and autocratic ideology of Nazism. Hitler aimed to eliminate Jews from Germany and establish a New Order to counter what he saw as the injustice of the post-World War I international order dominated by Britain and France. His first six years in power resulted in rapid economic recovery from the Great Depression, the abrogation of restrictions imposed on Germany after World War I, and the annexation of territories inhabited by millions of ethnic Germans, which gave him significant popular support.l lead-in to additional content.</p>
+        <a href="#" class="btn btn-primary">Go somewhere</a>
+      </div>
+    </div>
+  </div>
+  <div class="col-sm-5">
+
+    <div class="card">
+      <div class="card-header container-fluid">
+        <div class="row">
+          <div class="col-md-9">
+          </div>
+          <div class="col-md-1.5 float-right">
+            <div class="outter-badge"> 
+              <img src="/static/settings.png" alt="" height="45">
+            </div>        
+
+          </div>
+
+          <div class="col-md-1.5 float-right">
+            <div class="outter-badge"> 
+              <img src="/static/bell.ico" alt="" height="50">
+              {% if numrequests != 0 and numrequests < 100 %}
+              <div class="circle">{{numrequests}}</div>
+              {% endif %}
+              {% if numrequests != 0 and numrequests >= 100 %}
+              <img src="/static/bell.ico" alt="" height="45">
+              <div class="circle">99+</div>
+              {% endif %}
+
+            </div>        
+          </div>      
+           </div>
+        </div>
+      
+
+      <div class="card-body">
+        {% if verified %}
+        <h5 class="card-title"> <font size="+3">@{{userID}}</font> - verified user</h5>
+        {% endif %}
+        {% if not verified %}
+        <h5 class="card-title"><font size="+3">@{{userID}}</font> - unverified user</h5>
+        {% endif %}
+
+        {% if numFriends == 1%}
+        <h6 class="card-subtitle mb-2 text-muted">{{numFriends}} friend</h6>
+        {% endif %}
+        {% if numFriends != 1%}
+        <h6 class="card-subtitle mb-2 text-muted">{{numFriends}} friends</h6>
+        {% endif %}
+        <ul class="list-group list-group-flush">
+          <li class="list-group-item"><font size="+2">$</font><font size="+3">{{"{:.2f}".format(balance)}}</font>  <br>In Venmo
+            
+            <button type="button" class="btn btn-primary btn-lg btn-block" style="margin-top: 5px">
+              <strong>Transfer money</strong>
+            </button>
+
+          </li>
+  
+          <li class="list-group-item">Account Fees: ${{"{:.2f}".format(fees)}}</li>
+        </ul>
+        <p class="card-text">Text.</p>
+        <table class="table table-striped table-bordered">
+          <thead class="thead-dark">
+              <tr>
+              <th>
+                  Stock Name
+              </th>
+              <th>
+                  Stock Price
+              </th>
+              <th>
+                  Number of Holdings
+              </th>
+              <th>
+                  Total Value of Holding
+              </th>
+      
+              </tr>
+          </thead>
+        </table>
+      </div>
+      <div class="card-footer text-muted">
+        With Venmo Since {{date}}
+      </div>    
+    </div>
+  </div>
+</div>
+
+</body>
+{% endblock %}
+</html>
