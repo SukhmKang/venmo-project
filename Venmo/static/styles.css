@@ -21,6 +21,7 @@ nav .navbar-brand .green
 {
     color: #2e944b;
 }
+    
 
 main .form-control
 {
@@ -51,7 +52,7 @@ main img
     float: none; /* Added */
     margin-bottom: 10px; /* Added */
 }
-  
+ 
 
 .outter-badge {
     position: relative;
@@ -77,8 +78,8 @@ main img
   .circle {
     background: #bd2644;
     position: absolute;
-    top: 7px;
-    right: 3px;
+    top: 5px;
+    right: 2px;
     width: 23px; 
     height: 23px;
     border-radius: 50%;

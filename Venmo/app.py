@@ -8,7 +8,7 @@ from werkzeug.exceptions import default_exceptions, HTTPException, InternalServe
 from werkzeug.security import check_password_hash, generate_password_hash
 from webhelpers import apology, login_required, lookup, usd
 from datetime import datetime, timedelta
-from helpers import getbalance,getfees,friendgetter,isVerified,numrequests
+from helpers import getbalance,getfees,friendgetter,isVerified,numrequests, personallogpreview
 
 # Configure application
 app = Flask(__name__)
@@ -158,5 +158,19 @@ def home():
         verified = isVerified(userID, cursor)
         cursor.execute(''' SELECT creationDate FROM users WHERE username=?''', (userID,))
         date = fetch(cursor.fetchone())
+
+        # Log Preview #
+        #0 = senderID, 1 = recipientID, 2 = amount, 3 = date 4= message 5= paymentID
+        #6 = privacy 7 = tag 8 = senderBalance 9 = recipientBalance 10 = status
+        personallog = personallogpreview(userID,cursor)
+
         conn.close()
-        return render_template('home.html',userID=userID,balance=balance,fees=fees,numFriends=numFriends,verified=verified,date=date,numrequests=numRequests)
+        return render_template('home.html',userID=userID,balance=balance,fees=fees,numFriends=numFriends,verified=verified,date=date,numrequests=numRequests,personallog=personallog)
+
+@app.route("/pay", methods=["GET", "POST"])
+@login_required
+def pay():
+    if request.method == "POST":
+        counter=0
+    else:
+        return render_template('pay.html')

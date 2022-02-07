@@ -48,6 +48,31 @@ def getfees(userID, cursor):
     userFees = float(userFees)
     return userFees
 
+def globallogpreview(userID,cursor):
+    cursor.execute(''' SELECT senderID,recipientID,amount,date,message,paymentID,privacy,tag FROM paymentLog
+    WHERE status=? AND (privacy=?)
+    ORDER BY date DESC LIMIT 4''',("_payment","Public"))
+    log = cursor.fetchall()
+    print(log)
+    return
+
+def friendlogpreview(userID,cursor):
+    listoffriends = friendgetter(userID,cursor)
+    listoffriends=str(listoffriends)
+    listoffriends=listoffriends.replace('[','(')
+    listoffriends=listoffriends.replace(']',')')
+    print(listoffriends)
+    cursor.execute(''' SELECT username FROM users WHERE username IN ''')
+
+    return
+
+def personallogpreview(userID,cursor):
+    cursor.execute(''' SELECT senderID,recipientID,amount,date,message,paymentID,privacy,tag,senderBalance,recipientBalance,status FROM paymentLog
+    WHERE (senderID=? OR recipientID=?) AND (status=? OR status=? OR status=?)
+    ORDER BY date DESC LIMIT 5''',(userID,userID,"_payment","request","transfer"))
+    log = cursor.fetchall()
+    return log
+
 #checks if a user currently exists
 def validateuser(userID,cursor):
     cursor.execute(''' SELECT username FROM users WHERE username=?''', (userID,))
@@ -704,7 +729,7 @@ def transfer(userID, amount, cursor, type="no fee"):
 
     #updating paymentLog
     cursor.execute(''' INSERT INTO paymentLog (senderID, recipientID, amount, status, date, message, paymentID, privacy, tag, senderBalance, recipientBalance)
-    VALUES (?,?,?,?,?,?,?,?,?,?,?) ''',(userID,userBank,amount,"transfer",datetime.now(),type,transferID,None,None,None,None))
+    VALUES (?,?,?,?,?,?,?,?,?,?,?) ''',(userID,userBank,amount,"transfer",datetime.now(),type,transferID,None,None,userBalance,None))
 
 
     return

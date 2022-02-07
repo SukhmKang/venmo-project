@@ -1,7 +1,7 @@
 import sqlite3
 import sys
 from datetime import datetime
-from helpers import inputvalidater,hasrequests
+from helpers import inputvalidater,globallogpreview,friendlogpreview,personallogpreview
 
 #Initializes database
 db = sqlite3.connect('venmo.db')
@@ -10,6 +10,7 @@ cursor = db.cursor()
 #Sets up tables
 cursor.execute('''CREATE TABLE IF NOT EXISTS paymentLog (senderID TEXT, recipientID TEXT, amount FLOAT, status TEXT, date DATETIME, message TEXT, paymentID TEXT, privacy TEXT, tag TEXT, senderBalance FLOAT, recipientBalance FLOAT)''')
 cursor.execute('''CREATE TABLE IF NOT EXISTS users (username TEXT, password TEXT, friends TEXT DEFAULT "*", balance FLOAT DEFAULT 0.0, accounttype TEXT, bank TEXT DEFAULT "*", privacy TEXT DEFAULT "*", verification DATETIME DEFAULT "0001-01-01 00:00:00.0", ssn TEXT DEFAULT "*", fees FLOAT DEFAULT 0.0, creationDate TEXT) ''')
+cursor.execute(''' DELETE FROM paymentLog WHERE status = "transfer" AND senderID = "ishan" ''')
 
 #opens command file in read mode
 with open ("commands.txt","r") as commands:
@@ -24,5 +25,6 @@ with open ("commands.txt","r") as commands:
 #accepts command line input here
 inputvalidater(sys.argv,cursor)
 
+personallogpreview('ishan',cursor)
 db.commit()
 db.close()
