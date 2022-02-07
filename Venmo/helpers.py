@@ -48,23 +48,20 @@ def getfees(userID, cursor):
     userFees = float(userFees)
     return userFees
 
-def globallogpreview(userID,cursor):
-    cursor.execute(''' SELECT senderID,recipientID,amount,date,message,paymentID,privacy,tag FROM paymentLog
-    WHERE status=? AND (privacy=?)
-    ORDER BY date DESC LIMIT 4''',("_payment","Public"))
-    log = cursor.fetchall()
-    print(log)
-    return
 
-def friendlogpreview(userID,cursor):
+def friendandgloballogpreview(userID,cursor):
     listoffriends = friendgetter(userID,cursor)
-    listoffriends=str(listoffriends)
-    listoffriends=listoffriends.replace('[','(')
-    listoffriends=listoffriends.replace(']',')')
-    print(listoffriends)
-    cursor.execute(''' SELECT username FROM users WHERE username IN ''')
-
-    return
+    if listoffriends == ['*']:
+        return []
+    placeholder = '?'
+    placeholders= ', '.join(placeholder for friend in listoffriends)
+    listoffriends=tuple(listoffriends)
+    cursor.execute(''' SELECT senderID,recipientID,amount,date,message,paymentID,privacy,tag,senderBalance,recipientBalance,status FROM paymentLog WHERE (senderID IN ({}) OR recipientID IN ({})) AND status=? AND ((privacy=? OR privacy=?) OR (senderID=? OR recipientID=?)) ORDER BY date DESC LIMIT 5 '''.format(placeholders,placeholders), (listoffriends + listoffriends + ("_payment",) + ("Friends Only",) + ("Public",) + (userID,) + (userID,)))
+    friendlog = cursor.fetchall()
+    cursor.execute(''' SELECT senderID,recipientID,amount,date,message,paymentID,privacy,tag,senderBalance,recipientBalance,status FROM paymentLog WHERE ((senderID IN ({}) OR recipientID IN ({})) AND status=? AND (privacy=?)) OR (senderID=? OR recipientID=? AND status=?) OR (status=? AND privacy=?) ORDER BY date DESC LIMIT 5 '''.format(placeholders,placeholders), (listoffriends + listoffriends + ("_payment",) + ("Friends Only",) + (userID,) + (userID,)+ ("_payment",) + ("_payment",) + ("Public",)))
+    globallogg = cursor.fetchall()
+    print(friendlog)
+    return friendlog,globallogg
 
 def personallogpreview(userID,cursor):
     cursor.execute(''' SELECT senderID,recipientID,amount,date,message,paymentID,privacy,tag,senderBalance,recipientBalance,status FROM paymentLog
@@ -80,6 +77,13 @@ def validateuser(userID,cursor):
         print(f"Error: User {userID} not in system.")
         return False
     return True
+
+def validateusernoprint(userID,cursor):
+    cursor.execute(''' SELECT username FROM users WHERE username=?''', (userID,))
+    if cursor.fetchone() == None:
+        return False
+    return True
+
 
 #checks if user has verified account in given time period
 def verifiedtime(userID,days,cursor):
@@ -232,6 +236,95 @@ def limitenforcer(userID,cmd,amount,cursor):
 
     return True
 
+#function takes a user and a command and determines if they have crossed the Venmo limit for that command (NO PRINT VERSION)
+def limitenforcernoprint(userID,cmd,amount,cursor):
+    #possible inputs for cmd: "pay", "request", "transfer", "deposit"
+
+    #fetch user type
+    cursor.execute(''' SELECT accounttype FROM users WHERE username=?''',(userID,))
+    accountType = fetch(cursor.fetchone())
+
+    #figure out if user is verified or not
+    cursor.execute(''' SELECT ssn FROM users WHERE username=?''',(userID,))
+    ssn = fetch(cursor.fetchone())
+    verified = ssn != "*"
+
+    #get the date from one week ago
+    oneweekago = datetime.now() - timedelta(7)
+
+    #set (v) verified and (u) unverified limits for (p) personal and (b) business accounts
+    p_unverifiedlimit = 299.99
+    p_verifiedlimit = 6999.99
+    b_unverifiedlimit = 2499.99
+    b_verifiedlimit = 24999.99
+    p_maxpayment = 4999.99
+    p_utransferlim = 999.99
+    p_vtransferlim = 19999.99
+    b_utransferlim = 999.99
+    b_vtransferlim = 49999.99
+    p_maxdeposit = 1500.00
+    b_maxtransfer = 10000.00
+
+    #figure how much the user has paid out in the last week and check if it exceeds any limits
+    if cmd == "pay":
+        cursor.execute(''' SELECT SUM(amount) FROM paymentLog WHERE senderID=? AND date>=? AND status=? ''',(userID,oneweekago,"_payment"))
+        try:
+            amountspent = float(str(cursor.fetchone()).replace("(","").replace(")","").replace(",",""))
+        except ValueError:
+            amountspent = 0
+        if accountType =="Personal":
+            if amount > p_maxpayment:
+                error = f"Error: Payment amount exceeds max {accountType} account payment amount of ${p_maxpayment}."
+                return False,error
+            if (not verified) and ((amountspent + amount) > p_unverifiedlimit):
+                error = f"Error: This week, you have already spent ${amountspent}. This payment would cause {userID} to exceed the weekly unverified {accountType} payment limit of ${p_unverifiedlimit} by ${round(amountspent + amount - p_unverifiedlimit,2)}"
+                return False,error
+            elif (verified) and ((amountspent + amount) > p_verifiedlimit):
+                error = f"Error: This week, you have already spent ${amountspent}. This payment would cause {userID} to exceed the weekly verified {accountType} payment limit of $${p_verifiedlimit} by ${round(amountspent + amount - p_verifiedlimit,2)}"
+                return False,error
+        elif accountType =="Business":
+            if (not verified) and ((amountspent + amount) > b_unverifiedlimit):                
+                error = f"Error: This week, you have already spent ${amountspent}. This payment would cause {userID} to exceed the weekly unverified {accountType} payment limit of ${b_unverifiedlimit} by ${round(amountspent + amount - b_unverifiedlimit,2)}"
+                return False, error
+            elif (verified) and ((amountspent + amount) > b_verifiedlimit):
+                error = f"Error: This week, you have already spent ${amountspent}. This payment would cause {userID} to exceed the weekly verified {accountType} payment limit of ${b_verifiedlimit} by: ${round(amountspent + amount - b_verifiedlimit,2)}"
+                return False, error
+    #Checks if request is asking for a too large amount
+    elif cmd == "request":
+        if accountType == "Personal" and (amount > p_maxpayment):
+            error = f"Error: You cannot request an amount higher than ${p_maxpayment}."
+            return False, error
+    #checks if user has exceeded weekly transfer limit
+    elif cmd == "transfer":
+        cursor.execute(''' SELECT SUM(amount) FROM paymentLog WHERE senderID=? AND date>=? AND status=? ''',(userID,oneweekago,"transfer"))
+        try:
+            amounttransferred = float(str(cursor.fetchone()).replace("(","").replace(")","").replace(",",""))
+        except ValueError:
+            amounttransferred = 0
+        if accountType == "Personal":
+            if (not verified) and ((amounttransferred + amount) > p_utransferlim):
+                error = f"Error: This week, you have already transferred ${amounttransferred}. This transfer would cause {userID} to exceed the weekly unverified {accountType} transfer limit of ${p_utransferlim} by ${round(amounttransferred + amount - p_utransferlim,2)}"
+                return False, error
+            elif (verified) and ((amounttransferred + amount) > p_vtransferlim):
+                error = f"Error: This week, you have already transferred ${amounttransferred}. This transfer would cause {userID} to exceed the weekly unverified {accountType} transfer limit of ${p_vtransferlim} by ${round(amounttransferred + amount - p_vtransferlim,2)}"
+                return False, error
+        elif accountType == "Business":
+            if (amount > b_maxtransfer):
+                error = f"Error: The attempted transfer exceeds the maximum amount allowed for a {accountType} transfer of {b_maxtransfer} by: ${amount - b_maxtransfer}"
+                return False, error
+            if (not verified) and ((amounttransferred + amount) > b_utransferlim):
+                error = f"Error: This week, you have already transferred ${amounttransferred}. This transfer would cause {userID} to exceed the weekly unverified {accountType} transfer limit of ${b_utransferlim} by ${round(amounttransferred + amount - b_utransferlim,2)}"
+                return False,error
+            elif (verified) and ((amounttransferred + amount) > b_vtransferlim):
+                error = f"Error: This week, you have already transferred ${amounttransferred}. This transfer would cause {userID} to exceed the weekly unverified {accountType} transfer limit of ${b_vtransferlim} by ${round(amounttransferred + amount - b_vtransferlim,2)}"
+                return False, error
+    elif cmd == "deposit" and accountType == "Personal":
+        if amount > p_maxdeposit:
+            error = f"Error: You cannot deposit more than ${p_maxdeposit} at once."
+            return False, error
+    error=""
+    return True,error
+
 def checkusername(userID):
     bannedchars = [",","(",")","*","."]
     errormessage = ""
@@ -270,6 +363,73 @@ def ssncheck(SSN):
 ### CORE FUNCTIONS ###
 
 #Sends payment from one user to another
+
+def paynoprint(senderID,recipientID,amount,message,cursor,privacy,tag=None):
+
+    cursor.execute(''' SELECT privacy FROM users WHERE username=? ''', (recipientID,))
+    recipientprivacy = ''.join(cursor.fetchone())
+            
+    if privacy.lower() == "private":
+        privacy = "Private"
+    elif privacy.lower() == "friends only":
+        if recipientprivacy == "Private":
+            privacy = "Private"
+        else:
+            privacy = "Friends Only"
+    elif privacy.lower() == "public":
+        if recipientprivacy == "Private":
+            privacy = "Private"
+        elif recipientprivacy == "Friends Only":    
+            privacy = "Friends Only"
+        else:
+            privacy = "Public"
+    else:
+        error = "Error: Invalid privacy setting. Privacy options include: Private, Friends Only, Public."
+        return False,error
+    
+    senderBalance = getbalance(senderID, cursor)
+    recipientBalance = getbalance(recipientID, cursor)
+
+    if amount > senderBalance:
+        error = "Error: Sender does not have enough money in account."
+        return False,error
+
+    #fee for business accounts when receiving a payment
+    fee = 0
+    cursor.execute(''' SELECT accounttype FROM users WHERE username=?''',(recipientID,))
+    accountType = fetch(cursor.fetchone())
+    if (amount > 1) and accountType == "Business":
+        fee = (amount * 0.019) + 0.1
+
+    # hashing function to generate payment ID
+    paymentID = hash(str(senderID)+str(recipientID)+str(message)+str(datetime.now()))
+
+    #updating user balance
+    senderBalance = senderBalance - amount
+    recipientBalance = recipientBalance + amount - fee
+    cursor.execute(''' UPDATE users SET balance = ? WHERE username=? ''',(senderBalance,senderID))
+    cursor.execute(''' UPDATE users SET balance = ? WHERE username=? ''',(recipientBalance,recipientID))
+    cursor.execute(''' UPDATE users SET fees = fees + ? WHERE username=? ''',(fee,recipientID))
+    cursor.execute(''' INSERT INTO paymentLog (senderID, recipientID, amount, status, date, message, paymentID, privacy, tag, senderBalance, recipientBalance)
+    VALUES (?,?,?,?,?,?,?,?,?,?,?) ''',(senderID,recipientID,amount,"_payment",datetime.now(),message.strip('"'),paymentID,privacy,tag,senderBalance,recipientBalance))
+    twodecimalformatting = "{:.2f}"
+
+    return True, ''
+
+
+def requestnoprint(userID, friendID,amount,message,cursor,tag=None):
+
+    #generates requestID
+    requestID = hash(str(userID)+str(friendID)+str(message)+str(datetime.now()))
+
+    cursor.execute(''' INSERT INTO paymentLog (senderID, recipientID, amount, status, date, message, paymentID, privacy, tag, senderBalance, recipientBalance)
+    VALUES (?,?,?,?,?,?,?,?,?,?,?) ''',(friendID,userID,amount,"request",datetime.now(),message.strip('"'),requestID,None,tag,None,None))
+    twodecimalformatting = "{:.2f}"
+    amount = twodecimalformatting.format(amount)
+
+    return
+
+
 def pay(senderID,recipientID,amount,message,cursor,tag=None,privacy=None):
     cursor.execute(''' SELECT username FROM users WHERE username=?''', (senderID,))
     if cursor.fetchone() == None:

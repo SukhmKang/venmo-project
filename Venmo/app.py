@@ -8,7 +8,7 @@ from werkzeug.exceptions import default_exceptions, HTTPException, InternalServe
 from werkzeug.security import check_password_hash, generate_password_hash
 from webhelpers import apology, login_required, lookup, usd
 from datetime import datetime, timedelta
-from helpers import getbalance,getfees,friendgetter,isVerified,numrequests, personallogpreview
+from helpers import getbalance,getfees,friendgetter,isVerified,numrequests, personallogpreview, friendcheck, validateusernoprint, limitenforcernoprint,verifiedtime, paynoprint,requestnoprint,friendandgloballogpreview
 
 # Configure application
 app = Flask(__name__)
@@ -55,6 +55,11 @@ def login():
         # Query database for username
         conn = get_db_connection()
         cursor = conn.cursor()
+        if not (request.form.get("username")):
+            return render_template("login.html",errorcode = "Please enter a username.")
+        if not (request.form.get("password")):
+            return render_template("login.html",errorcode = "Please enter a password.")
+
         cursor.execute('''SELECT password FROM users WHERE username = ?''',(request.form.get("username"),))
         #checks if user exists
         correctpassword = cursor.fetchone()
@@ -163,14 +168,72 @@ def home():
         #0 = senderID, 1 = recipientID, 2 = amount, 3 = date 4= message 5= paymentID
         #6 = privacy 7 = tag 8 = senderBalance 9 = recipientBalance 10 = status
         personallog = personallogpreview(userID,cursor)
+        friendlog,globallog = friendandgloballogpreview(userID,cursor)
 
         conn.close()
-        return render_template('home.html',userID=userID,balance=balance,fees=fees,numFriends=numFriends,verified=verified,date=date,numrequests=numRequests,personallog=personallog)
+        return render_template('home.html',userID=userID,balance=balance,fees=fees,numFriends=numFriends,verified=verified,date=date,numrequests=numRequests,personallog=personallog,friendlog=friendlog)
 
 @app.route("/pay", methods=["GET", "POST"])
 @login_required
 def pay():
     if request.method == "POST":
-        counter=0
+        senderID = session["user_id"]
+        tags = ["food", "groceries", "rent", "utilities", "sports", "fun", "transportation", "drinks", "business", "tickets", "gift", "gas"]
+        transactiontype = request.form.get("payorrequest")
+        recipientID = request.form.get("username")
+        amount = request.form.get("amount")
+        message = request.form.get("message")
+        tag = request.form.get("tag")
+        privacy = request.form.get("privacy")
+        # Making sure the user actually typed in valid values #
+        if not transactiontype:
+            return render_template('pay.html',errormessage="Please enter a transaction type.")
+        if not recipientID:
+            return render_template('pay.html',errormessage="Please enter a recipient.")
+        if not amount:
+            return render_template('pay.html',errormessage="Please enter a payment amount.")
+        try:
+            amount = float(amount)
+        except ValueError:
+            return render_template('pay.html',errormessage="Please enter a numerical payment amount.")
+        if amount <= 0:
+            return render_template('pay.html',errormessage="You cannot pay or request less than or equal to 0 dollars.")
+        if not message:
+            return render_template('pay.html',errormessage="Please enter a message.")
+        if (tag) and (tag.lower() not in tags):
+            return render_template('pay.html',errormessage="Please enter a valid tag.",recipientID=recipientID,transactiontype=transactiontype,amount=amount,message=message,tag=tag,privacy=privacy)
+        if transactiontype == "Pay" and privacy not in ["Private","Friends Only","Public"]:
+            return render_template('pay.html',errormessage="Please enter a valid privacy.",recipientID=recipientID,transactiontype=transactiontype,amount=amount,message=message,tag=tag,privacy=privacy)
+
+        # checking important stuff #
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        if senderID == recipientID:
+            return render_template('pay.html',errormessage=f"You cannot {transactiontype.lower()} yourself!",recipientID=recipientID,transactiontype=transactiontype,amount=amount,message=message,tag=tag,privacy=privacy)
+
+        if not validateusernoprint(recipientID,cursor):
+            return render_template('pay.html',errormessage=f"User '{recipientID}' does not exist.",recipientID=recipientID,transactiontype=transactiontype,amount=amount,message=message,tag=tag,privacy=privacy)
+
+        if not friendcheck(senderID,recipientID,cursor):
+            return render_template('pay.html',errormessage=f"You are not friends with {recipientID}.",recipientID=recipientID,transactiontype=transactiontype,amount=amount,message=message,tag=tag,privacy=privacy)
+
+        withinlimit,limiterror = limitenforcernoprint(senderID,transactiontype.lower(),amount,cursor)
+        if not withinlimit:
+            return render_template('pay.html',errormessage=limiterror,recipientID=recipientID,transactiontype=transactiontype,amount=amount,message=message,tag=tag,privacy=privacy)
+
+        if not verifiedtime(senderID,120,cursor):
+            return render_template('pay.html',errormessage=f"Error: To complete a payment or request you must verify your account in the past 120 days.",recipientID=recipientID,transactiontype=transactiontype,amount=amount,message=message,tag=tag,privacy=privacy)
+        if transactiontype == "Pay":
+            paymentworked,paymenterror = paynoprint(senderID,recipientID,amount,message,cursor,privacy,tag)
+            if not paymentworked:
+                return render_template('pay.html',errormessage=paymenterror,recipientID=recipientID,transactiontype=transactiontype,amount=amount,message=message,tag=tag,privacy=privacy)
+        elif transactiontype == "Request":
+            requestnoprint(senderID,recipientID,amount,message,cursor,tag)
+
+        conn.commit()
+        conn.close()
+
+        return render_template('success.html',transactiontype=transactiontype,recipientID=recipientID,amount=amount)
     else:
-        return render_template('pay.html')
+        return render_template('pay.html',errormessage="")

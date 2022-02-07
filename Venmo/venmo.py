@@ -1,7 +1,7 @@
 import sqlite3
 import sys
 from datetime import datetime
-from helpers import inputvalidater,globallogpreview,friendlogpreview,personallogpreview
+from helpers import inputvalidater,friendandgloballogpreview,personallogpreview
 
 #Initializes database
 db = sqlite3.connect('venmo.db')
@@ -25,6 +25,7 @@ with open ("commands.txt","r") as commands:
 #accepts command line input here
 inputvalidater(sys.argv,cursor)
 
-personallogpreview('ishan',cursor)
+friendandgloballogpreview("ishan",cursor)
+
 db.commit()
 db.close()
