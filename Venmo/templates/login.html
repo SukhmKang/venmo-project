@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+
+        
+
+{% extends "layout.html" %}
+
+{% block title %}
+    Venmo Project
+{% endblock %}
+
+{% block main %}
+
+    <script>
+        //waits for page to be loaded
+        document.addEventListener('DOMContentLoaded', function() {
+
+// Select the submit button and input to be used later
+const submit = document.getElementById("submitbutton");
+const usernameinput = document.querySelector("div.form-group input[name='username']");
+const Password = document.querySelector("div.form-group input[name='password']");
+
+// Disable submit button by default:
+submit.disabled = true;
+
+// Listen for input to be typed into the input field
+usernameinput.onkeyup = () => {
+    if ((usernameinput.value.length > 0) && Password.value.length > 0) {
+        submit.disabled = false;
+    }
+    else {
+        submit.disabled = true;
+    }
+
+    if ((usernameinput.value.length > 2) || Password.value.length > 2) {
+        document.getElementById("error_code").innerHTML = '';
+
+    }
+
+
+    }
+
+    
+
+Password.onkeyup = () => {
+    if ((usernameinput.value.length > 0) && Password.value.length > 0) {
+        submit.disabled = false;
+        document.getElementById("error_code").innerHTML = '';
+    }
+    else {
+        submit.disabled = true;
+    }
+
+    if ((usernameinput.value.length > 2) || Password.value.length > 2) {
+        document.getElementById("error_code").innerHTML = '';
+
+    }
+
+    }
+    
+
+});
+    </script>
+
+<style>
+#venmoicon {
+    height: 100px;
+
+}
+#signuppage {
+    text-decoration: none;
+}
+
+#submitbutton {
+  /*  padding: 4px 10px; */
+  display: inline-block;
+  border-radius: 50px;
+  background-color: #00B1FF;
+  color: white;
+  border: 5px solid white;
+  transition: border 0.2s ease;
+
+}
+#submitbutton:hover {
+  border: 5px solid #81D9FF;
+}
+
+#submitbutton:disabled {
+    display: inline-block;
+    border-radius: 50px;
+    background-color: #00B1FF;
+    color: white;
+    border: 5px solid white;
+    transition: border 0.2s ease;
+
+  }
+
+
+</style>    
+
+
+    <div class="card" style="width: 18rem;">
+        
+    <div class="card-body">
+        <blockquote class="blockquote">
+            <img id="venmoicon" src="static/Venmo_41071.ico">
+            </blockquote>
+
+
+        
+    <form action="/" method="post">
+        <div class="form-group">
+            <input autocomplete="off" autofocus class="form-control" name="username" placeholder="Username" type="text">
+        </div>
+        <div class="form-group">
+            <input class="form-control" name="password" placeholder="Password" type="password">
+        </div>
+        <button class="btn btn-primary" id = "submitbutton" name="loginbutton" type="submit" >Log In</button>
+    </form>
+    <blockquote id="error_code" class="blockquote">
+        <p>{{ errorcode }}</p>
+    </blockquote>
+
+    </div>
+    </div>
+
+    <div class="card" style="width: 18rem;">
+        <div class="card-body">
+            <blockquote class="blockquote">
+                <p>Don't have an account? Click <a id="signuppage" href="/register">here</a> to sign up.</p>
+            </blockquote>
+        </div>
+    </div>
+      
+{% endblock %}
+
+
+</html>

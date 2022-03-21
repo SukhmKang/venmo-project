@@ -1,0 +1,474 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    Quote
+{% endblock %}
+
+{% block main %}
+
+<body>
+
+<script>
+    //waits for page to be loaded
+    document.addEventListener('DOMContentLoaded', function() {
+
+
+// Select the submit button and input to be used later
+const submit = document.getElementById("submitbutton");
+//amount
+const amount = document.getElementById("amount");
+// bank ID radio
+const defaultbank = document.getElementById("defaultbank");
+const otherbank = document.getElementById("otherbank");
+
+// optional bank form
+const newbankprepend = document.getElementById("newbank-prepend");
+const newbankform = document.getElementById("newbank");
+const makedefault = document.getElementById("makedefault");
+const makedefaultlabel = document.getElementById("makedefaultlabel");
+const optionalrow = document.getElementById("optionalrow");
+const hasnobank_bankinput = document.getElementById('newbank_hasnobank');
+const hasnobank_makedefault = document.getElementById('makedefault_hasnobank');
+
+// Disable submit button by default:
+submit.disabled = true;
+
+hasnobank_bankinput.onkeyup = () => {
+  
+var check1 = true;
+var check2 = false;
+var check3 = false;
+var check4 = false;
+var check5 = false;
+
+if (!isNaN(amount.value)){
+    check2 = true;
+}
+if (amount.value > 0 && amount.value < 1500){
+    check3 = true;
+}
+
+if (defaultbank.checked) {
+  check4 = true;
+}
+else {
+  if (newbankform.value.toString().length == 9 && !isNaN(newbankform.value) && newbankform.value > 0) {
+    check4 = true;
+  }
+}
+
+if (hasnobank_bankinput.value.toString().length == 9 && !isNaN(hasnobank_bankinput.value) && hasnobank_bankinput.value > 0) {
+  check5 = true;
+  
+}
+
+if (check1 && check2 && check3 && (check4 || check5)){
+
+    submit.disabled = false;
+}
+else{
+    submit.disabled = true;
+}
+
+
+}
+
+
+newbankform.onkeyup = () => {
+  
+  var check1 = true;
+  var check2 = false;
+  var check3 = false;
+  var check4 = false;
+  var check5 = false;
+  
+  if (!isNaN(amount.value)){
+      check2 = true;
+  }
+  if (amount.value > 0 && amount.value < 1500){
+      check3 = true;
+  }
+  
+  if (defaultbank.checked) {
+    check4 = true;
+  }
+  else {
+    if (newbankform.value.toString().length == 9 && !isNaN(newbankform.value) && newbankform.value > 0) {
+      check4 = true;
+    }
+  }
+  
+  if (hasnobank_bankinput.value.toString().length == 9 && !isNaN(hasnobank_bankinput.value) && hasnobank_bankinput.value > 0) {
+    check5 = true;
+    
+  }
+  
+  if (check1 && check2 && check3 && (check4 || check5)){
+  
+      submit.disabled = false;
+  }
+  else{
+      submit.disabled = true;
+  }
+  
+  
+  }
+  
+//Listen for user to select radio
+defaultbank.onchange = () => {
+  if (otherbank.checked) {
+    newbankprepend.style.display = 'block';
+    newbankform.style.display = 'block';
+    makedefault.style.display = 'block';
+    makedefaultlabel.style.display = 'block';
+    optionalrow.style.display = 'flex';
+  }
+  else {
+    newbankprepend.style.display = 'none';
+    newbankform.style.display = 'none';
+    makedefault.style.display = 'none';
+    makedefaultlabel.style.display = 'none';
+    optionalrow.style.display = 'none';
+
+  }
+
+  var check1 = true;
+  var check2 = false;
+  var check3 = false;
+  var check4 = false;
+  var check5 = false;
+  
+  if (!isNaN(amount.value)){
+      check2 = true;
+  }
+  if (amount.value > 0 && amount.value < 1500){
+      check3 = true;
+  }
+  
+  if (defaultbank.checked) {
+    check4 = true;
+  }
+  else {
+    if (newbankform.value.toString().length == 9 && !isNaN(newbankform.value) && newbankform.value > 0) {
+      check4 = true;
+    }
+  }
+  
+  if (hasnobank_bankinput.value.toString().length == 9 && !isNaN(hasnobank_bankinput.value) && hasnobank_bankinput.value > 0) {
+    check5 = true;
+    
+  }
+  
+  if (check1 && check2 && check3 && (check4 || check5)){
+  
+      submit.disabled = false;
+  }
+  else{
+      submit.disabled = true;
+  }
+
+
+}
+
+otherbank.onchange = () => {
+  if (otherbank.checked) {
+    newbankprepend.style.display = 'block';
+    newbankform.style.display = 'block';
+    makedefault.style.display = 'block';
+    makedefaultlabel.style.display = 'block';
+    optionalrow.style.display = 'flex';
+  }
+  else {
+    newbankprepend.style.display = 'none';
+    newbankform.style.display = 'none';
+    makedefault.style.display = 'none';
+    makedefaultlabel.style.display = 'none';
+    optionalrow.style.display = 'none';
+
+  }
+
+  var check1 = true;
+  var check2 = false;
+  var check3 = false;
+  var check4 = false;
+  var check5 = false;
+  
+  if (!isNaN(amount.value)){
+      check2 = true;
+  }
+  if (amount.value > 0 && amount.value < 1500){
+      check3 = true;
+  }
+  
+  if (defaultbank.checked) {
+    check4 = true;
+  }
+  else {
+    if (newbankform.value.toString().length == 9 && !isNaN(newbankform.value) && newbankform.value > 0) {
+      check4 = true;
+    }
+  }
+  
+  if (hasnobank_bankinput.value.toString().length == 9 && !isNaN(hasnobank_bankinput.value) && hasnobank_bankinput.value > 0) {
+    check5 = true;
+    
+  }
+  
+  if (check1 && check2 && check3 && (check4 || check5)){
+  
+      submit.disabled = false;
+  }
+  else{
+      submit.disabled = true;
+  }
+
+
+}
+
+
+
+// Listen for input to be typed into the input field
+amount.onkeyup = () => {
+  
+    var check1 = true;
+  var check2 = false;
+  var check3 = false;
+  var check4 = false;
+  var check5 = false;
+  
+  if (!isNaN(amount.value)){
+      check2 = true;
+  }
+  if (amount.value > 0 && amount.value < 1500){
+      check3 = true;
+  }
+  
+  if (defaultbank.checked) {
+    check4 = true;
+  }
+  else {
+    if (newbankform.value.toString().length == 9 && !isNaN(newbankform.value) && newbankform.value > 0) {
+      check4 = true;
+    }
+  }
+  
+  if (hasnobank_bankinput.value.toString().length == 9 && !isNaN(hasnobank_bankinput.value) && hasnobank_bankinput.value > 0) {
+    check5 = true;
+    
+  }
+  
+  if (check1 && check2 && check3 && (check4 || check5)){
+  
+      submit.disabled = false;
+  }
+  else{
+      submit.disabled = true;
+  }
+
+}
+
+
+});
+</script>
+
+<style>
+
+.btn {
+    padding: 4px 10px;
+    display: inline-block;
+    border-radius: 10px;
+    background-color: #00B1FF;
+    color: white;
+    border: 5px solid white;
+    transition: border 0.2s ease;
+  }
+  .btn:hover:enabled {
+    border: 5px solid #81D9FF;
+    cursor: pointer;
+    background-color: #00B1FF;
+  }
+  .btn:disabled {
+    padding: 4px 10px;
+    display: inline-block;
+    border-radius: 10px;
+    background-color: #00B1FF;
+    color: white;
+    border: 5px solid white;
+    transition: border 0.2s ease;
+
+  }
+
+</style>
+
+{% if message|length > 0 %}
+
+{% if deposit_worked %}
+<div class="alert alert-success alert-dismissible fade show" role="alert" me-2>
+    {{message}}
+    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+      <span aria-hidden="true">&times;</span>
+    </button>
+  </div>
+{% endif %}
+
+{% if not deposit_worked %}
+<div class="alert alert-danger alert-dismissible fade show" role="alert">
+    {{message}}
+    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+      <span aria-hidden="true">&times;</span>
+    </button>
+  </div>
+{% endif %}
+
+{% endif %}
+
+
+<div class="row">
+    <div class="col-md-2 mb-3">
+    </div>
+    <div class="col-md-8 mb-3">
+        
+  <div class="row">
+  
+    <div class="col-md-4">
+    </div>
+  
+    <div class="col-md-4">
+    
+  <h3 class="text-center mt-3 mb-3">Deposit</h3>
+  
+      <form action="/deposit" method="post">
+  
+          <div class="form-row mb-1 mr-2 ml-2">
+              
+                  <div class = "input-group">
+                <div class="input-group-prepend">
+                  <span class="input-group-text" id="amountPrepend">$</span>
+                </div>
+                <input type="number" class="form-control" id="amount" name="amount" placeholder="0.00" step="any" autocomplete="off">
+              </div>
+             
+        </div>
+  
+        <h6 class="text-center mb-2"> <small id="amount-info">Deposit up to $1500.00</small></h6>
+  
+  
+            <div class="form-row mt-1 mr-2 ml-2">
+            <p><strong>Deposit Money From:</strong></p>
+          </div>
+  
+          {% if not hasbank %}
+          <div id="hasnobankrow" class="form-row mb-3 mr-2 ml-2">
+  
+            <div class = "input-group mb-1">
+              <div class="input-group-prepend">
+                <span class="input-group-text">Bank ID</span>
+              </div>
+              <input type="text" class="form-control" id="newbank_hasnobank" name="newbank_hasnobank" placeholder="Bank ID" autocomplete="off">
+            </div>
+  
+            <div class="form-check form-switch">
+              <input class="form-check-input" type="checkbox" name="makedefault_hasnobank" id="makedefault_hasnobank" value="makedefault_hasnobank">
+              <label class="form-check-label" id="makedefault_hasnobanklabel" for="makedefault_hasnobank">Set as default bank</label>
+            </div>
+            
+          </div>
+  
+          <div class="form-row mb-3 mr-2 ml-2" style = "display:none;">
+              
+              
+            <div class="form-check form-check-inline">
+              <input class="form-check-input" type="radio" name="bank" id="defaultbank" value="defaultbank">
+              <label class="form-check-label" for="defaultbank">
+                {{bankID}} (Default)
+              </label>
+            </div>
+            <div class="form-check form-check-inline">
+              <input class="form-check-input" type="radio" name="bank" id="otherbank" value="otherbank" checked>
+              <label class="form-check-label" for="otherbank">
+                Other
+              </label>
+            </div>
+  
+      
+          </div>
+  
+          <input type="text" class="form-control mb-2" id="newbank" name="newbank" value="" placeholder="Bank ID" autocomplete="off" style="display:none;">
+  
+          {% endif %}
+  
+  
+          {% if hasbank %}
+  
+          <input type="text" class="form-control" id="newbank_hasnobank" name="newbank_hasnobank" placeholder="Bank ID" autocomplete="off" style="display:none;">
+  
+  
+            <div class="form-row mb-3 mr-2 ml-2">
+              
+              
+              <div class="form-check form-check-inline">
+                <input class="form-check-input" type="radio" name="bank" id="defaultbank" value="defaultbank" checked>
+                <label class="form-check-label" for="defaultbank">
+                  {{bankID}} (Default)
+                </label>
+              </div>
+              <div class="form-check form-check-inline">
+                <input class="form-check-input" type="radio" name="bank" id="otherbank" value="otherbank">
+                <label class="form-check-label" for="otherbank">
+                  Other
+                </label>
+              </div>
+  
+        
+            </div>
+  
+            <div id="optionalrow" class="form-row mb-3 mr-2 ml-2" style="display:none;">
+  
+              <div class = "input-group">
+                <div class="input-group-prepend" id = "newbank-prepend" style="display:none;">
+                  <span class="input-group-text" id="newbankprepend">New Bank ID</span>
+                </div>
+                <input type="text" class="form-control mb-2" id="newbank" name="newbank" placeholder="Bank ID" autocomplete="off" style="display:none;">
+              </div>
+  
+              <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" name="makedefault" id="makedefault" value="makedefault" style="display:none;">
+                <label class="form-check-label" id="makedefaultlabel" for="makedefault" style="display:none;">Set as default bank</label>
+              </div>
+              
+            </div>
+            {% endif %}
+    
+          
+            <div class="form-row">
+  
+              <div class="col-md-2 mb-3"></div>
+              <div class="col-md-8 mb-3">
+  
+                <button id= "submitbutton" class="btn btn-primary" type="submit">Deposit</button>
+  
+              </div>
+              <div class="col-md-2 mb-3"></div>
+  
+            </div>
+  
+            </div>
+  
+  
+              </form>
+  
+            </div>
+  
+            <div class="col-md-4">
+            </div>
+          
+  
+          </div>
+  
+    </div>
+  <div class="col-md-2 mb-3">
+  </div>
+  </div>
+  {% endblock %}
+
+</body>

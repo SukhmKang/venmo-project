@@ -1,0 +1,312 @@
+<!doctype html>
+<html lang="en">
+
+{% extends "layout.html" %}
+
+{% block title %}
+    Transfer
+{% endblock %}
+
+{% block main %}
+
+<body>
+
+  <script src="https://code.jquery.com/jquery-3.6.0.js"></script>
+  <script src="https://code.jquery.com/ui/1.13.1/jquery-ui.js"></script>
+  <link rel="stylesheet" href="//code.jquery.com/ui/1.13.1/themes/base/jquery-ui.css">
+
+<script>
+
+
+
+
+document.addEventListener('DOMContentLoaded', function() {
+
+var userData = '{{userbase|tojson|safe}}';
+userData = userData.replaceAll('"',"");
+userData = userData.substring(1,userData.length - 1);
+const userArray = userData.split(", ");
+const submitbutton = document.getElementById('submitbutton');
+const userinput = document.getElementById('username');
+
+
+submitbutton.disabled = true;
+
+userinput.onkeyup = () => {
+  if (userinput.value.length > 0 && userArray.includes(userinput.value) ) {
+    submitbutton.disabled = false;
+  }
+  else {
+    submitbutton.disabled = true;
+  }
+}
+
+
+$( function() { 
+    $( "#username" ).autocomplete({
+      source: userArray,
+
+      select: function(event,ui) {
+        submitbutton.disabled = false;
+      },
+
+      change: function(event,ui) {
+        submitbutton.disabled = false;
+      }
+    });
+  } );
+
+
+
+} );
+</script>
+
+<style>
+
+.ui-autocomplete-category {
+    font-weight: bold;
+    padding: .2em .4em;
+    margin: .8em 0 .2em;
+    line-height: 1.5;
+  }
+
+  .outter-badge{
+    cursor: pointer;
+}
+#profilepic {
+  width: 100px;
+  margin-bottom: 10px;
+}
+
+.badge
+{
+  color:white;
+  
+}
+
+#paymentphoto {
+  width: 40px;
+  min-width: 40px;
+  margin-bottom: 5px;
+  flex-shrink: 0;
+}
+
+.mb-1 {
+  text-align:center;
+}
+
+.ui-autocomplete {
+    max-height: 200px;
+    overflow-y: auto;
+    /* prevent horizontal scrollbar */
+    overflow-x: hidden;
+  }
+
+  #friends-tab:not(.active) {
+  background-color: transparent;
+}
+#addfriends-tab:not(.active) {
+  background-color: transparent;
+}
+
+#friendreqs-tab:not(.active) {
+  background-color: transparent;
+}
+
+
+
+#friends-tab  {
+  background-color: #00B1FF;
+}
+#addfriends-tab {
+  background-color: #00B1FF;
+}
+
+#friendreqs-tab {
+  background-color: #00B1FF;
+}
+
+
+#submitbutton {
+    padding: 4px 10px;
+    display: inline-block;
+    border-radius: 10px;
+    background-color: #00B1FF;
+    color: white;
+    border: 5px solid white;
+    transition: border 0.2s ease;
+  }
+  #submitbutton:hover:enabled {
+    border: 5px solid #81D9FF;
+    cursor: pointer;
+    background-color: #00B1FF;
+  }
+  #submitbutton:disabled {
+    padding: 4px 10px;
+    display: inline-block;
+    border-radius: 10px;
+    background-color: #00B1FF;
+    color: white;
+    border: 5px solid white;
+    transition: border 0.2s ease;
+
+  }
+
+
+</style>
+
+
+
+
+{% if message|length > 0 %}
+{% if message[0] == 'S' %}
+<div class="alert alert-success alert-dismissible fade show" role="alert" me-2>
+    {{message}}
+    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+      <span aria-hidden="true">&times;</span>
+    </button>
+  </div>
+{% endif %}
+
+{% if message[0] == 'D' or message[0] == 'E' %}
+<div class="alert alert-danger alert-dismissible fade show" role="alert">
+    {{message}}
+    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+      <span aria-hidden="true">&times;</span>
+    </button>
+  </div>
+{% endif %}
+
+{% endif %}
+
+
+<ul class="nav nav-pills mb-3 justify-content-center" id="myTab" role="tablist">
+    <li class="nav-item ml-1 mr-1">
+      <a class="nav-link active" id="friends-tab" data-toggle="tab" href="#friends" role="tab" aria-controls="friends" aria-selected="true">Friends</a>
+    </li>
+    
+    <li class="nav-item ml-1 mr-1">
+      <a class="nav-link" id="addfriends-tab" data-toggle="tab"  href="#addfriends" role="tab" aria-controls="addfriends" aria-selected="false">Add Friends</a>
+    </li>
+
+    <li class="nav-item ml-1 mr-1">
+        <a class="nav-link" id="friendreqs-tab" data-toggle="tab"  href="#friendreqs" role="tab" aria-controls="friendreqs" aria-selected="false">Requests</a>
+      </li>
+    
+  </ul>
+
+<div class="row">
+
+<div class="col-md-4"></div>
+
+<div class="col-md-4">
+
+    <div class="tab-content" id="myTabContent">
+        <div class="tab-pane fade show active p-1" id="friends" role="tabpanel" aria-labelledby="friends-tab">
+          {% if friends|length == 0%}
+          You don't have any friends...yet!
+          {% endif %}
+          {% if friends|length != 0 %}
+          <ul class="list-group list-group-flush">
+              {% for elem in friends %}
+              {% set friendID = elem%}
+              {% set firstchar = friendID[0] %}
+              {% if firstchar.isalpha() %}
+              {% set firstchar = firstchar.upper() %}
+              {% endif %}
+
+              <a href="#" class="list-group-item list-group-item-action">
+                  <div class="row">
+                    <div class="col-3 col-lg-2 mr-auto" >
+                      <img id="paymentphoto" src="/static/{{ firstchar }}.png">
+                    </div>
+                    <div class="col-6 col-lg-7 ml-auto">
+                      <div class="d-flex w-100 justify-content-between">
+                        <h5 class="mb-1"><strong>{{ friendID }}</strong></h5>          
+                      </div>
+                    </div>
+                    <div class="col-3 col-lg-3 ml-auto">
+                      <form action="/social" method="post">
+                          <button type="submit" name = "submitbutton" value = "pay-{{ friendID }}" class="btn btn-light mb-2">Pay</button>
+                          <button type="submit" name = "submitbutton" value = "request-{{ friendID }}" class="btn btn-light">Request</button>
+                      </form>                          
+                    </div>
+        
+                  </div>
+                </a>
+                      {% endfor %}
+          </ul>
+          {% endif %}
+    
+        </div>
+        
+        <div class="tab-pane fade show inactive p-1" id="friendreqs" role="tabpanel" aria-labelledby="friendreqs-tab">
+          
+          {% if friendrequests|length == 0%}
+          You don't have any friend requests right now.
+      {% endif %}
+      {% if friendrequests|length != 0 %}
+      <ul class="list-group list-group-flush">
+          {% for elem in friendrequests %}
+          {% set friendID = elem %}
+          {% set firstchar = friendID[0] %}
+          {% if firstchar.isalpha() %}
+          {% set firstchar = firstchar.upper() %}
+          {% endif %}
+
+
+          <a href="#" class="list-group-item list-group-item-action">
+              <div class="row">
+                <div class="col-2 col-lg-1 mr-auto" >
+                  <img id="paymentphoto" src="/static/{{ firstchar }}.png">
+                </div>
+                <div class="col-6 col-lg-8 ml-auto">
+                  <div class="d-flex w-100 justify-content-center">
+                    <h5 class="mb-1"><strong>{{ friendID }}</strong><br>friended you</h5>    
+                  </div>
+                  
+                </div>
+
+                <div class="col-4 col-lg-3 ml-auto">
+                  <form action="/social" method="post">
+                      <button type="submit" name = "submitbutton" value = "acceptfriend-{{ friendID }}" class="btn btn-outline-success mb-2">Accept</button>
+                      <button type="submit" name = "submitbutton" value = "denyfriend-{{ friendID }}" class="btn btn-outline-danger">Reject</button>
+                  </form>                          
+                </div>
+
+              </div>
+            </a>
+                  {% endfor %}
+      </ul>
+      {% endif %}
+
+
+        </div>
+
+        <div class="tab-pane fade show inactive p-1" id="addfriends" role="tabpanel" aria-labelledby="addfriends-tab">
+          <div class="row justify-content-center">
+          <form autocomplete="off" action="/social" method="post">
+            <div class="form-row mr-2 ml-2">
+              <input id="username" autocomplete="off" type="text" name="username" placeholder="User">
+            </div>
+            <div class="form-row mb-1 mr-2 ml-2">
+          <button type="submit" name= "submitbutton" id="submitbutton" value ="friendrequest" class="btn btn-primary mt-3 mb-2">Send Friend Request</button>
+            </div>
+        </form>
+      </div>
+
+      </div>
+        
+
+    </div>
+</div>
+
+<div class="col-md-4"></div>
+
+</div>
+
+</body>
+
+{% endblock %}
+
+</html>

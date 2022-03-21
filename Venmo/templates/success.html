@@ -1,0 +1,6 @@
+{% if transactiontype == "Pay" %}
+<p>successfully paid {{ recipientID }} ${{amount}}!</p>
+{% endif %}
+{% if transactiontype == "Request" %}
+<p>successfully requested {{ recipientID }} ${{amount}}!</p>
+{% endif %}
