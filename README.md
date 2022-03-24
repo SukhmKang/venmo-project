@@ -62,16 +62,18 @@ Description: On the settings page, the user can ```verify``` their account, ```l
 <img src="https://github.com/SukhmKang/venmo-project/blob/main/Screenshots/Settings.png" width="500">
 
 **```personalLog```**\
-Description: For the ```personalLog``` as well as the rest of the logs, the user can apply a variety of filters so that the log only shows the payments that the user wants to see.
+Description: The ```personalLog``` displays payments directly involving the user and bank transfers. For the ```personalLog``` as well as the rest of the logs, the user can apply a variety of filters so that the log only shows the payments that the user wants to see.
+
+<img src="https://github.com/SukhmKang/venmo-project/blob/main/Screenshots/Filters.png" width="500">
 
 **```friendLog```**\
-Description:
+Description: The ```friendLog``` displays payments directly involving the user as well as ```Friends Only``` payments involving at least one of the user's friends.
 
 **```globalLog```**\
-Description:
+Description: The ```globalLog``` displays all of the payments in the ```personalLog``` and ```friendLog``` in addition to all ```Public``` payments on the platform.
 
 **```requestLog```**\
-Description:
+Description: The ```requestLog``` displays all of the user's incoming and outgoing requests.
 
 **``transferLog```**\
 Description:
