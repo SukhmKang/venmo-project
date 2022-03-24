@@ -12,6 +12,7 @@ Visit the fully functional website [here](https://venmoproject.pythonanywhere.co
 **Python** (https://www.python.org/) \
 **Flask** (https://flask.palletsprojects.com/en/2.0.x/) \
 **Bootstrap** (https://getbootstrap.com/) \
+**Javascript** (https://www.javascript.com/) \
 **SQLite** (https://www.sqlite.org/index.html)
 
 ## Commands
@@ -73,10 +74,12 @@ Description: The ```friendLog``` displays payments directly involving the user a
 Description: The ```globalLog``` displays all of the payments in the ```personalLog``` and ```friendLog``` in addition to all ```Public``` payments on the platform.
 
 **```requestLog```**\
-Description: The ```requestLog``` displays all of the user's incoming and outgoing requests.
+Description: The ```requestLog``` displays all of the user's incoming and outgoing requests. The log shows whether a request is  ```pending```, ```accepted```, or ```denied```.
 
-**``transferLog```**\
-Description:
+<img src="https://github.com/SukhmKang/venmo-project/blob/main/Screenshots/Request%20Log.png" width="500">
+
+**```transferLog```**\
+Description: The ```transferLog``` displays all of the user's bank transfers.
 
 ## Example Database
 
@@ -92,82 +95,21 @@ Here is an example of our paymentLog table:
 
 ![](https://github.com/SukhmKang/passion-projects/blob/main/Venmo%20paymentLog.db.png)
 
-## Example Output
+## Backend Features
 
-### Transaction Logs
+### Database
 
-Here is an example of the output printed by specific commands in our program once the payment system is loaded using Commands.txt (a starter script which generates users and performs several transactions).
+The central database (venmo.db) contains a Users table and a paymentLog table.
 
-**COMMAND:**
+**Users**
 
-```
-python3 venmo.py globallog Lukas
-```
-This command will print the ```globallog``` viewable for a given userID. In other words, all payments that are set to ```"Public"``` or are ```"Friends Only"``` and include one of userID's friends or are ```"Private"``` but involve the userID as a sender or recipient, will be logged. 
+<img>
 
-**OUTPUT:**
-```
-======
-CADENCE paid LEIGHTON $39.00
-Date: 2022-01-05 19:24:25
-Message: neighbor
-ID: 4912021424446041479
-Privacy: Public
-Tag: gas
-======
+**paymentLog**
 
-======
-NATHALIA paid RAYMOND $32.00
-Date: 2022-01-05 19:24:25
-Message: wrote near arrange gray
-ID: -5995160770132735197
-Privacy: Public
-======
+<img>
 
-======
-ELISHA paid LEIGHTON $17.00
-Date: 2022-01-05 19:24:25
-Message: seeing image include friendly face
-ID: 8785650049271825540
-Privacy: Public
-======
-
-======
-RAYMOND paid JAYCE $2.00
-Date: 2022-01-05 19:24:25
-Message: already brief reach
-ID: -150183031060747061
-Privacy: Friends Only
-Tag: sports
-======
-
-======
-LUPITA paid RAYMOND $33.00
-Date: 2022-01-05 19:24:25
-Message: related him mouth carried badly
-ID: 4281393501062655380
-Privacy: Friends Only
-Tag: drinks
-======
-
-======
-LUPITA paid ESTEFANIA $40.00
-Date: 2022-01-05 19:24:25
-Message: quick wing repeat minute matter
-ID: 235882096320024938
-Privacy: Friends Only
-Tag: fun
-======
-
-======
-CHARLEY paid LUKAS $4.00
-Date: 2022-01-05 19:24:25
-Message: tune
-ID: 7830547338156538219
-Privacy: Private
-Tag: drinks
-======
-```
+### Payment Limits
 
 ### Filtering
 Like all other log commands (```friendLog```, ```personalLog```, ```requestLog```), the ```globalLog``` also allows users to input optional input to filter the data presented in the log. Users have the option to apply (and even stack) any of the following filters: 
