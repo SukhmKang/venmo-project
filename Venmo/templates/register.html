@@ -1,0 +1,359 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    Register
+{% endblock %}
+
+
+
+{% block main %}
+
+<script>
+    //waits for page to be loaded
+    document.addEventListener('DOMContentLoaded', function() {
+
+// Select the submit button and input to be used later
+const submit = document.getElementById("submitbutton");
+const accountType = document.getElementById("accounttype");
+const userName = document.querySelector("div.form-group input[name='username']");
+const Password = document.querySelector("div.form-group input[name='password']");
+const verifyPassword = document.querySelector("div.form-group input[name='confirmation']");
+
+function checkusername(username) {
+
+    var checks = [false,false,false];
+
+    if ((username.length <= 15) && (username.length >= 5)) {
+        checks[0] = true;
+    }
+    var alphanumeric = new RegExp(
+        "^[0-9a-zA-Z]+$"
+    );
+    var alphabetical = new RegExp(
+        "^[A-Za-z]+$"
+    );
+
+    if (alphanumeric.test(username)) {
+        checks[1] = true;
+    }
+    if (username.length > 0) {
+        if (alphabetical.test(username[0])) {
+            checks[2] = true;
+        }
+    }
+    return checks;
+}
+
+function checkpassword(password) {
+    //order: length, lowercase, 
+var checks = [false,false,false,false];
+
+if (password.length == 0) {
+    return checks;
+}
+
+if (password.length >= 8) {
+    checks[0] = true;
+}
+
+var lowercase = new RegExp(
+          "^(?=.*[a-z]).+$"
+        );
+var uppercase = new RegExp(
+          "^(?=.*[A-Z]).+$"
+        );
+var number = new RegExp(
+          "^(?=.*\\d).+$"
+        );
+
+if (lowercase.test(password)) {
+    checks[1] = true;
+}
+
+if (uppercase.test(password)) {
+    checks[2] = true;
+}
+
+if (number.test(password)) {
+    checks[3] = true;
+}
+
+return checks;
+
+}
+
+
+// Disable submit button by default:
+submit.disabled = true;
+
+// Listen for input to be typed into the input field
+userName.onkeyup = () => {
+    var check = checkpassword(Password.value)
+    var usercheck = checkusername(userName.value)
+    var passwordstatus = true;
+    var usernamestatus = true;
+    for (let i=0;i<check.length;i++) {
+        stat = check[i];
+        if (stat == false) {
+            passwordstatus = false;
+            break;
+        }
+    }
+    for (let i=0;i<usercheck.length;i++) {
+        stat = usercheck[i];
+        if (stat == false) {
+            usernamestatus = false;
+            break;
+        }
+    }
+
+    if ((userName.value.length > 0) && (Password.value.length > 0) && (verifyPassword.value.length > 0) && (verifyPassword.value === Password.value) &&(accountType.value === "Business" || accountType.value === "Personal") && (passwordstatus) && (usernamestatus)) {
+    submit.disabled = false;
+}
+else {
+    submit.disabled = true;
+}
+}
+
+Password.onkeyup = () => {
+    var check = checkpassword(Password.value)
+    var usercheck = checkusername(userName.value)
+    var passwordstatus = true;
+    var usernamestatus = true;
+    for (let i=0;i<check.length;i++) {
+        stat = check[i];
+        if (stat == false) {
+            passwordstatus = false;
+            break;
+        }
+    }
+    for (let i=0;i<usercheck.length;i++) {
+        stat = usercheck[i];
+        if (stat == false) {
+            usernamestatus = false;
+            break;
+        }
+    }
+
+    if ((userName.value.length > 0) && (Password.value.length > 0) && (verifyPassword.value.length > 0) && (verifyPassword.value === Password.value) &&(accountType.value === "Business" || accountType.value === "Personal") && (passwordstatus) && (usernamestatus)) {
+    submit.disabled = false;
+}
+else {
+    submit.disabled = true;
+}
+
+if (Password.value != verifyPassword.value && verifyPassword.value.length > 0) {
+        document.getElementById("passwordmatch").innerHTML = 'Make sure password and confirmation match.'
+    }
+    else {
+        document.getElementById("passwordmatch").innerHTML = ''
+    }
+
+if (Password.value.length != 0) {
+    if (check[0] == true) {
+        document.getElementById("length").innerHTML = ''
+    }
+    else {
+        document.getElementById("length").innerHTML = 'Password must have at least 8 characters.'
+    }
+    if (check[1] == true) {
+        document.getElementById("lowercase").innerHTML = ''
+    }
+    else {
+        document.getElementById("lowercase").innerHTML = 'Password must have at least one lowercase character.'
+    }
+    if (check[2] == true) {
+        document.getElementById("uppercase").innerHTML = ''
+    }
+    else {
+        document.getElementById("uppercase").innerHTML = 'Password must have at least one uppercase character.'
+    }
+
+    if (check[3] == true) {
+        document.getElementById("number").innerHTML = ''
+    }
+    else {
+        document.getElementById("number").innerHTML = 'Password must have at least one number.'
+    }
+}
+else {
+    document.getElementById("number").innerHTML = ''
+    document.getElementById("uppercase").innerHTML = ''
+    document.getElementById("lowercase").innerHTML = ''
+    document.getElementById("length").innerHTML = ''
+
+}
+
+}
+
+verifyPassword.onkeyup = () => {
+    var check = checkpassword(Password.value)
+    var usercheck = checkusername(userName.value)
+    var passwordstatus = true;
+    var usernamestatus = true;
+    for (let i=0;i<check.length;i++) {
+        stat = check[i];
+        if (stat == false) {
+            passwordstatus = false;
+            break;
+        }
+    }
+    for (let i=0;i<usercheck.length;i++) {
+        stat = usercheck[i];
+        if (stat == false) {
+            usernamestatus = false;
+            break;
+        }
+    }
+
+    if ((userName.value.length > 0) && (Password.value.length > 0) && (verifyPassword.value.length > 0) && (verifyPassword.value === Password.value) &&(accountType.value === "Business" || accountType.value === "Personal") && (passwordstatus) && (usernamestatus)) {
+    submit.disabled = false;
+}
+else {
+    submit.disabled = true;
+}
+if (Password.value != verifyPassword.value) {
+        document.getElementById("passwordmatch").innerHTML = 'Make sure password and confirmation match.'
+    }
+    else {
+        document.getElementById("passwordmatch").innerHTML = ''
+    }
+
+}
+
+accountType.onchange = () => {
+    var check = checkpassword(Password.value)
+    var usercheck = checkusername(userName.value)
+    var passwordstatus = true;
+    var usernamestatus = true;
+    for (let i=0;i<check.length;i++) {
+        stat = check[i];
+        if (stat == false) {
+            passwordstatus = false;
+            break;
+        }
+    }
+    for (let i=0;i<usercheck.length;i++) {
+        stat = usercheck[i];
+        if (stat == false) {
+            usernamestatus = false;
+            break;
+        }
+    }
+
+    if ((userName.value.length > 0) && (Password.value.length > 0) && (verifyPassword.value.length > 0) && (verifyPassword.value === Password.value) &&(accountType.value === "Business" || accountType.value === "Personal") && (passwordstatus) && (usernamestatus)) {
+    submit.disabled = false;
+}
+else {
+    submit.disabled = true;
+}
+}
+
+
+});
+</script>
+
+
+<style>
+#venmoicon {
+    height: 100px;
+
+}
+
+#loginpage {
+    text-decoration: none;
+}
+
+#submitbutton {
+  /*  padding: 4px 10px; */
+  display: inline-block;
+  border-radius: 50px;
+  background-color: #00B1FF;
+  color: white;
+  border: 5px solid white;
+  transition: border 0.2s ease;
+
+}
+#submitbutton:hover {
+  border: 5px solid #81D9FF;
+}
+
+#submitbutton:disabled {
+    display: inline-block;
+    border-radius: 50px;
+    background-color: #00B1FF;
+    color: white;
+    border: 5px solid white;
+    transition: border 0.2s ease;
+
+  }
+
+
+</style>
+
+<div class="card" style="width: 18rem;">
+    <div class="card-body">
+        <blockquote class="blockquote">
+            <img id="venmoicon" src="static/Venmo_41071.ico">
+            </blockquote>
+        
+
+    <form action="/register" method="post">
+        <div class="form-group">
+            <input autocomplete="off" autofocus class="form-control" name="username" placeholder="Username" type="text">
+        </div>
+        <select id = "accounttype" name="accounttype">
+            <option disabled selected value="">Account Type</option>
+                        <option value = "Personal">Personal</option>
+                        <option value = "Business">Business</option>
+        </select>
+        <div class="form-group mt-3">
+            <input class="form-control" name="password" placeholder="Password" type="password">
+        </div>
+        <div class="form-group">
+        <input class="form-control" name="confirmation" placeholder="Confirm Password" type="password">
+        </div>
+        <button class="btn btn-primary" id="submitbutton" type="submit">Confirm</button>
+    </form>
+    <blockquote id ="passwordmatch" class="blockquote">
+        
+    </blockquote>
+    <blockquote id ="length" class="blockquote">
+        
+    </blockquote>
+
+    <blockquote id ="uppercase" class="blockquote">
+        
+    </blockquote>
+    <blockquote id ="lowercase" class="blockquote">
+        
+    </blockquote>
+    <blockquote id ="number" class="blockquote">
+        
+    </blockquote>
+
+
+    <blockquote class="blockquote">
+        {%if len_errorcode != 0%}
+        {% for error in range(len_errorcode) %}
+        <p>{{ errorcode[error] }}</p>
+        {% endfor %}
+        {% endif %}
+        
+    </blockquote>
+
+</div>
+</div>
+
+<div class="card" style="width: 18rem;">
+    <div class="card-body">
+        <blockquote class="blockquote">
+            <p>Have an account? Click <a id="loginpage" href="/">here</a> to log in.</p>
+        </blockquote>
+    </div>
+</div>
+
+
+
+{% endblock %}
+

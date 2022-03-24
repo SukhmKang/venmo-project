@@ -1,0 +1,1934 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    Logs
+{% endblock %}
+
+{% block main %}
+
+<body>
+
+<style>
+
+.hr {
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+  border: 0;
+  border-top: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+#submitbutton {
+  /*  padding: 4px 10px; */
+  display: inline-block;
+  border-radius: 50px;
+  background-color: #00B1FF;
+  color: white;
+  border: 5px solid white;
+  transition: border 0.2s ease;
+
+}
+#submitbutton:hover {
+  border: 5px solid #81D9FF;
+}
+
+#submitbutton:disabled {
+    display: inline-block;
+    border-radius: 50px;
+    background-color: #00B1FF;
+    color: white;
+    border: 5px solid white;
+    transition: border 0.2s ease;
+
+  }
+
+
+
+</style>
+
+
+<script>
+
+document.addEventListener('DOMContentLoaded', function() {
+    const logtype = document.getElementById("logtype");
+    const sender = document.getElementById("sender");
+    const recipient = document.getElementById("recipient");
+    const below = document.getElementById("below");
+    const above = document.getElementById("above");
+    const lower = document.getElementById("lower");
+    const upper = document.getElementById("upper");
+    const days = document.getElementById("days");
+    const fromdate = document.getElementById("fromdate");
+    const todate = document.getElementById("todate");
+    const message = document.getElementById("message");
+    const messagecontains = document.getElementById("messagecontains");
+    const tag = document.getElementById("tag");
+    const status = document.getElementById("status");
+    const submitbutton = document.getElementById("submitbutton");
+    const transferrow = document.getElementById("transferrow");
+    const transfertypelabel = document.getElementById("transfertypelabel");
+    const transfertype = document.getElementById("transfertype");
+    const requestrow = document.getElementById("requestrow");
+    const requestlabel = document.getElementById("requestlabel");
+    const descriptionrow = document.getElementById("descriptionrow");
+    const msgtagrow = document.getElementById("msgtagrow");
+    const logexplanation = document.getElementById('logexplanation')
+    const userID = '{{userID}}';
+    const tags = ["food", "groceries", "rent", "utilities", "sports", "fun", "transportation", "drinks", "business", "tickets", "gift", "gas"];
+
+    function checkdate(date) {
+        var dateReg = /^\d{2}[/]\d{2}[/]\d{2}$/;
+        return date.match(dateReg);
+    }
+
+    if (logtype.value == "personal" || logtype.value == "global" || logtype.value == "friend") {
+        sender.value = '';
+        recipient.value = '';
+        below.value = '';
+        above.value = '';
+        upper.value = '';
+        lower.value = '';
+        days.value = '';
+        fromdate.value = '';
+        todate.value = '';
+        message.value = '';
+        messagecontains.value = '';
+        tag.value = '';
+        sender.readOnly = false;
+        transferrow.style.display = 'none';
+        transfertypelabel.style.display = 'none';
+        requestrow.style.display = 'none';
+        requestlabel.style.display = 'none';
+        msgtagrow.style.display = 'flex';
+        descriptionrow.style.display = 'flex';
+        
+    }
+
+    if (logtype.value == "request") {
+        sender.value = '';
+        recipient.value = '';
+        below.value = '';
+        above.value = '';
+        upper.value = '';
+        lower.value = '';
+        days.value = '';
+        fromdate.value = '';
+        todate.value = '';
+        message.value = '';
+        messagecontains.value = '';
+        tag.value = '';
+        sender.readOnly = false;
+        transferrow.style.display = 'none';
+        transfertypelabel.style.display = 'none';
+        requestrow.style.display = 'flex';
+        requestlabel.style.display = 'flex';
+        msgtagrow.style.display = 'flex';
+        descriptionrow.style.display = 'flex';
+    }
+
+    if (logtype.value == "transfer") {
+        recipient.value = '';
+        below.value = '';
+        above.value = '';
+        upper.value = '';
+        lower.value = '';
+        days.value = '';
+        fromdate.value = '';
+        todate.value = '';
+        message.value = '';
+        messagecontains.value = '';
+        tag.value = '';
+        msgtagrow.style.display = 'none';
+        descriptionrow.style.display = 'none';
+        transferrow.style.display = 'flex';
+        transfertypelabel.style.display = 'flex';
+        requestrow.style.display = 'none';
+        requestlabel.style.display = 'none';
+        sender.value = userID;
+        sender.readOnly = true;
+    }
+
+
+if (logtype.value == "personal") {
+    logexplanation.innerHTML = 'personalLog displays transactions that involve you.'
+}
+
+if (logtype.value == "global") {
+    logexplanation.innerHTML = 'globalLog displays visible transactions that involve any Venmo user.'
+}
+
+if (logtype.value == "friend") {
+    logexplanation.innerHTML = 'friendLog displays visible transactions that involve you or your friends.';
+}
+
+if (logtype.value == "request") {
+    logexplanation.innerHTML = 'requestLog displays incoming and outgoing requests.';
+}
+
+if (logtype.value == "transfer") {
+    logexplanation.innerHTML = 'transferLog displays your bank transfers.';
+}
+
+if (logtype.value == "no selection") {
+    logexplanation.innerHTML = '';
+}
+
+    submitbutton.disabled = true;
+    var check1 = false;
+    if (logtype.value == 'no selection') {
+        check1 = false;
+    }
+    else {
+        check1 = true;
+    }
+    var check2 = false;
+    if (below.value.toString().length > 0 && above.value.toString().length > 0) {
+        check2 = false;
+    }
+    else {
+        check2 = true;
+    }
+    var check3 = false;
+    if ((below.value.toString().length > 0 && (upper.value.toString().length > 0 || lower.value.toString().length >0)) || (above.value.toString().length > 0 && (upper.value.toString().length > 0 || lower.value.toString().length >0))) {
+        check3 = false;
+    }
+    else {
+        check3 = true;
+    }
+    var check4 = false;
+    if ((below.value.toString().length == 0 || (!isNaN(below.value))) && (above.value.toString().length == 0 || (!isNaN(above.value))) && (upper.value.toString().length == 0 || (!isNaN(upper.value))) && (lower.value.toString().length == 0 || (!isNaN(lower.value)))) {
+        check4 = true;
+    }
+    else {
+        check4 = false;
+    }
+    var check5 = false;
+    if ((upper.value.toString().length == 0 && lower.value.toString().length == 0) ||  (upper.value.toString().length > 0 && lower.value.toString().length > 0 && upper.value > lower.value)) {
+        check5 = true;
+    }
+    else {
+        check5 = false;
+    }
+    var check6 = false;
+    if (days.value.toString().length > 0 && (fromdate.value.length > 0 || todate.value.length > 0)) {
+        check6 = false;
+    }
+    else {
+        check6 = true;
+    }
+    var check7 = false;
+    if (days.value.toString().length == 0 || days.value > 0) {
+        check7 = true;
+    }
+    else {
+        check7 = false;
+    }
+    var check8 = false;
+    if ((fromdate.value.length == 0 && todate.value.length == 0) || (fromdate.value.length > 0 && todate.value.length > 0)) {
+        check8 = true;
+    }
+    else {
+        check8 = false;
+    }
+    
+    var check9 = false;
+    if ((checkdate(fromdate.value) && checkdate(todate.value)) || (fromdate.value.length == 0 && todate.value.length == 0)) {
+        check9 = true;
+    }
+    else {
+        check9 = false;
+    }
+
+    var check10 = false;
+    if (tag.value.length == 0 || tags.includes(tag.value)) {
+        check10 = true;
+    }
+    else {
+        check10 = false;
+    }
+    if (check1 && check2 && check3 && check4 && check5 && check6 && check7 && check8 && check9 && check10) {
+        submitbutton.disabled = false;
+    }
+    else {
+        submitbutton.disabled = true;
+    }
+    
+
+    sender.onkeyup = () => {
+    submitbutton.disabled = true;
+    var check1 = false;
+    if (logtype.value == 'no selection') {
+        check1 = false;
+    }
+    else {
+        check1 = true;
+    }
+    var check2 = false;
+    if (below.value.toString().length > 0 && above.value.toString().length > 0) {
+        check2 = false;
+    }
+    else {
+        check2 = true;
+    }
+    var check3 = false;
+    if ((below.value.toString().length > 0 && (upper.value.toString().length > 0 || lower.value.toString().length >0)) || (above.value.toString().length > 0 && (upper.value.toString().length > 0 || lower.value.toString().length >0))) {
+        check3 = false;
+    }
+    else {
+        check3 = true;
+    }
+    var check4 = false;
+    if ((below.value.toString().length == 0 || (!isNaN(below.value))) && (above.value.toString().length == 0 || (!isNaN(above.value))) && (upper.value.toString().length == 0 || (!isNaN(upper.value))) && (lower.value.toString().length == 0 || (!isNaN(lower.value)))) {
+        check4 = true;
+    }
+    else {
+        check4 = false;
+    }
+    var check5 = false;
+    if ((upper.value.toString().length == 0 && lower.value.toString().length == 0) ||  (upper.value.toString().length > 0 && lower.value.toString().length > 0 && upper.value > lower.value)) {
+        check5 = true;
+    }
+    else {
+        check5 = false;
+    }
+    var check6 = false;
+    if (days.value.toString().length > 0 && (fromdate.value.length > 0 || todate.value.length > 0)) {
+        check6 = false;
+    }
+    else {
+        check6 = true;
+    }
+    var check7 = false;
+    if (days.value.toString().length == 0 || days.value > 0) {
+        check7 = true;
+    }
+    else {
+        check7 = false;
+    }
+    var check8 = false;
+    if ((fromdate.value.length == 0 && todate.value.length == 0) || (fromdate.value.length > 0 && todate.value.length > 0)) {
+        check8 = true;
+    }
+    else {
+        check8 = false;
+    }
+    
+    var check9 = false;
+    if ((checkdate(fromdate.value) && checkdate(todate.value)) || (fromdate.value.length == 0 && todate.value.length == 0)) {
+        check9 = true;
+    }
+    else {
+        check9 = false;
+    }
+
+    var check10 = false;
+    if (tag.value.length == 0 || tags.includes(tag.value)) {
+        check10 = true;
+    }
+    else {
+        check10 = false;
+    }
+    if (check1 && check2 && check3 && check4 && check5 && check6 && check7 && check8 && check9 && check10) {
+        submitbutton.disabled = false;
+    }
+    else {
+        submitbutton.disabled = true;
+    }
+
+    }
+    recipient.onkeyup = () => {
+    submitbutton.disabled = true;
+    var check1 = false;
+    if (logtype.value == 'no selection') {
+        check1 = false;
+    }
+    else {
+        check1 = true;
+    }
+    var check2 = false;
+    if (below.value.toString().length > 0 && above.value.toString().length > 0) {
+        check2 = false;
+    }
+    else {
+        check2 = true;
+    }
+    var check3 = false;
+    if ((below.value.toString().length > 0 && (upper.value.toString().length > 0 || lower.value.toString().length >0)) || (above.value.toString().length > 0 && (upper.value.toString().length > 0 || lower.value.toString().length >0))) {
+        check3 = false;
+    }
+    else {
+        check3 = true;
+    }
+    var check4 = false;
+    if ((below.value.toString().length == 0 || (!isNaN(below.value))) && (above.value.toString().length == 0 || (!isNaN(above.value))) && (upper.value.toString().length == 0 || (!isNaN(upper.value))) && (lower.value.toString().length == 0 || (!isNaN(lower.value)))) {
+        check4 = true;
+    }
+    else {
+        check4 = false;
+    }
+    var check5 = false;
+    if ((upper.value.toString().length == 0 && lower.value.toString().length == 0) ||  (upper.value.toString().length > 0 && lower.value.toString().length > 0 && upper.value > lower.value)) {
+        check5 = true;
+    }
+    else {
+        check5 = false;
+    }
+    var check6 = false;
+    if (days.value.toString().length > 0 && (fromdate.value.length > 0 || todate.value.length > 0)) {
+        check6 = false;
+    }
+    else {
+        check6 = true;
+    }
+    var check7 = false;
+    if (days.value.toString().length == 0 || days.value > 0) {
+        check7 = true;
+    }
+    else {
+        check7 = false;
+    }
+    var check8 = false;
+    if ((fromdate.value.length == 0 && todate.value.length == 0) || (fromdate.value.length > 0 && todate.value.length > 0)) {
+        check8 = true;
+    }
+    else {
+        check8 = false;
+    }
+    
+    var check9 = false;
+    if ((checkdate(fromdate.value) && checkdate(todate.value)) || (fromdate.value.length == 0 && todate.value.length == 0)) {
+        check9 = true;
+    }
+    else {
+        check9 = false;
+    }
+
+    var check10 = false;
+    if (tag.value.length == 0 || tags.includes(tag.value)) {
+        check10 = true;
+    }
+    else {
+        check10 = false;
+    }
+    if (check1 && check2 && check3 && check4 && check5 && check6 && check7 && check8 && check9 && check10) {
+        submitbutton.disabled = false;
+    }
+    else {
+        submitbutton.disabled = true;
+    }
+
+    }
+    below.onkeyup = () => {
+    submitbutton.disabled = true;
+    var check1 = false;
+    if (logtype.value == 'no selection') {
+        check1 = false;
+    }
+    else {
+        check1 = true;
+    }
+    var check2 = false;
+    if (below.value.toString().length > 0 && above.value.toString().length > 0) {
+        check2 = false;
+    }
+    else {
+        check2 = true;
+    }
+    var check3 = false;
+    if ((below.value.toString().length > 0 && (upper.value.toString().length > 0 || lower.value.toString().length >0)) || (above.value.toString().length > 0 && (upper.value.toString().length > 0 || lower.value.toString().length >0))) {
+        check3 = false;
+    }
+    else {
+        check3 = true;
+    }
+    var check4 = false;
+    if ((below.value.toString().length == 0 || (!isNaN(below.value))) && (above.value.toString().length == 0 || (!isNaN(above.value))) && (upper.value.toString().length == 0 || (!isNaN(upper.value))) && (lower.value.toString().length == 0 || (!isNaN(lower.value)))) {
+        check4 = true;
+    }
+    else {
+        check4 = false;
+    }
+    var check5 = false;
+    if ((upper.value.toString().length == 0 && lower.value.toString().length == 0) ||  (upper.value.toString().length > 0 && lower.value.toString().length > 0 && upper.value > lower.value)) {
+        check5 = true;
+    }
+    else {
+        check5 = false;
+    }
+    var check6 = false;
+    if (days.value.toString().length > 0 && (fromdate.value.length > 0 || todate.value.length > 0)) {
+        check6 = false;
+    }
+    else {
+        check6 = true;
+    }
+    var check7 = false;
+    if (days.value.toString().length == 0 || days.value > 0) {
+        check7 = true;
+    }
+    else {
+        check7 = false;
+    }
+    var check8 = false;
+    if ((fromdate.value.length == 0 && todate.value.length == 0) || (fromdate.value.length > 0 && todate.value.length > 0)) {
+        check8 = true;
+    }
+    else {
+        check8 = false;
+    }
+    
+    var check9 = false;
+    if ((checkdate(fromdate.value) && checkdate(todate.value)) || (fromdate.value.length == 0 && todate.value.length == 0)) {
+        check9 = true;
+    }
+    else {
+        check9 = false;
+    }
+
+    var check10 = false;
+    if (tag.value.length == 0 || tags.includes(tag.value)) {
+        check10 = true;
+    }
+    else {
+        check10 = false;
+    }
+    if (check1 && check2 && check3 && check4 && check5 && check6 && check7 && check8 && check9 && check10) {
+        submitbutton.disabled = false;
+    }
+    else {
+        submitbutton.disabled = true;
+    }
+
+    }
+    above.onkeyup = () => {
+    submitbutton.disabled = true;
+    var check1 = false;
+    if (logtype.value == 'no selection') {
+        check1 = false;
+    }
+    else {
+        check1 = true;
+    }
+    var check2 = false;
+    if (below.value.toString().length > 0 && above.value.toString().length > 0) {
+        check2 = false;
+    }
+    else {
+        check2 = true;
+    }
+    var check3 = false;
+    if ((below.value.toString().length > 0 && (upper.value.toString().length > 0 || lower.value.toString().length >0)) || (above.value.toString().length > 0 && (upper.value.toString().length > 0 || lower.value.toString().length >0))) {
+        check3 = false;
+    }
+    else {
+        check3 = true;
+    }
+    var check4 = false;
+    if ((below.value.toString().length == 0 || (!isNaN(below.value))) && (above.value.toString().length == 0 || (!isNaN(above.value))) && (upper.value.toString().length == 0 || (!isNaN(upper.value))) && (lower.value.toString().length == 0 || (!isNaN(lower.value)))) {
+        check4 = true;
+    }
+    else {
+        check4 = false;
+    }
+    var check5 = false;
+    if ((upper.value.toString().length == 0 && lower.value.toString().length == 0) ||  (upper.value.toString().length > 0 && lower.value.toString().length > 0 && upper.value > lower.value)) {
+        check5 = true;
+    }
+    else {
+        check5 = false;
+    }
+    var check6 = false;
+    if (days.value.toString().length > 0 && (fromdate.value.length > 0 || todate.value.length > 0)) {
+        check6 = false;
+    }
+    else {
+        check6 = true;
+    }
+    var check7 = false;
+    if (days.value.toString().length == 0 || days.value > 0) {
+        check7 = true;
+    }
+    else {
+        check7 = false;
+    }
+    var check8 = false;
+    if ((fromdate.value.length == 0 && todate.value.length == 0) || (fromdate.value.length > 0 && todate.value.length > 0)) {
+        check8 = true;
+    }
+    else {
+        check8 = false;
+    }
+    
+    var check9 = false;
+    if ((checkdate(fromdate.value) && checkdate(todate.value)) || (fromdate.value.length == 0 && todate.value.length == 0)) {
+        check9 = true;
+    }
+    else {
+        check9 = false;
+    }
+
+    var check10 = false;
+    if (tag.value.length == 0 || tags.includes(tag.value)) {
+        check10 = true;
+    }
+    else {
+        check10 = false;
+    }
+    if (check1 && check2 && check3 && check4 && check5 && check6 && check7 && check8 && check9 && check10) {
+        submitbutton.disabled = false;
+    }
+    else {
+        submitbutton.disabled = true;
+    }
+
+    }
+    upper.onkeyup = () => {
+    submitbutton.disabled = true;
+    var check1 = false;
+    if (logtype.value == 'no selection') {
+        check1 = false;
+    }
+    else {
+        check1 = true;
+    }
+    var check2 = false;
+    if (below.value.toString().length > 0 && above.value.toString().length > 0) {
+        check2 = false;
+    }
+    else {
+        check2 = true;
+    }
+    var check3 = false;
+    if ((below.value.toString().length > 0 && (upper.value.toString().length > 0 || lower.value.toString().length >0)) || (above.value.toString().length > 0 && (upper.value.toString().length > 0 || lower.value.toString().length >0))) {
+        check3 = false;
+    }
+    else {
+        check3 = true;
+    }
+    var check4 = false;
+    if ((below.value.toString().length == 0 || (!isNaN(below.value))) && (above.value.toString().length == 0 || (!isNaN(above.value))) && (upper.value.toString().length == 0 || (!isNaN(upper.value))) && (lower.value.toString().length == 0 || (!isNaN(lower.value)))) {
+        check4 = true;
+    }
+    else {
+        check4 = false;
+    }
+    var check5 = false;
+    if ((upper.value.toString().length == 0 && lower.value.toString().length == 0) ||  (upper.value.toString().length > 0 && lower.value.toString().length > 0 && upper.value > lower.value)) {
+        check5 = true;
+    }
+    else {
+        check5 = false;
+    }
+    var check6 = false;
+    if (days.value.toString().length > 0 && (fromdate.value.length > 0 || todate.value.length > 0)) {
+        check6 = false;
+    }
+    else {
+        check6 = true;
+    }
+    var check7 = false;
+    if (days.value.toString().length == 0 || days.value > 0) {
+        check7 = true;
+    }
+    else {
+        check7 = false;
+    }
+    var check8 = false;
+    if ((fromdate.value.length == 0 && todate.value.length == 0) || (fromdate.value.length > 0 && todate.value.length > 0)) {
+        check8 = true;
+    }
+    else {
+        check8 = false;
+    }
+    
+    var check9 = false;
+    if ((checkdate(fromdate.value) && checkdate(todate.value)) || (fromdate.value.length == 0 && todate.value.length == 0)) {
+        check9 = true;
+    }
+    else {
+        check9 = false;
+    }
+
+    var check10 = false;
+    if (tag.value.length == 0 || tags.includes(tag.value)) {
+        check10 = true;
+    }
+    else {
+        check10 = false;
+    }
+    if (check1 && check2 && check3 && check4 && check5 && check6 && check7 && check8 && check9 && check10) {
+        submitbutton.disabled = false;
+    }
+    else {
+        submitbutton.disabled = true;
+    }
+
+    }
+    lower.onkeyup = () => {
+    submitbutton.disabled = true;
+    var check1 = false;
+    if (logtype.value == 'no selection') {
+        check1 = false;
+    }
+    else {
+        check1 = true;
+    }
+    var check2 = false;
+    if (below.value.toString().length > 0 && above.value.toString().length > 0) {
+        check2 = false;
+    }
+    else {
+        check2 = true;
+    }
+    var check3 = false;
+    if ((below.value.toString().length > 0 && (upper.value.toString().length > 0 || lower.value.toString().length >0)) || (above.value.toString().length > 0 && (upper.value.toString().length > 0 || lower.value.toString().length >0))) {
+        check3 = false;
+    }
+    else {
+        check3 = true;
+    }
+    var check4 = false;
+    if ((below.value.toString().length == 0 || (!isNaN(below.value))) && (above.value.toString().length == 0 || (!isNaN(above.value))) && (upper.value.toString().length == 0 || (!isNaN(upper.value))) && (lower.value.toString().length == 0 || (!isNaN(lower.value)))) {
+        check4 = true;
+    }
+    else {
+        check4 = false;
+    }
+    var check5 = false;
+    if ((upper.value.toString().length == 0 && lower.value.toString().length == 0) ||  (upper.value.toString().length > 0 && lower.value.toString().length > 0 && upper.value > lower.value)) {
+        check5 = true;
+    }
+    else {
+        check5 = false;
+    }
+    var check6 = false;
+    if (days.value.toString().length > 0 && (fromdate.value.length > 0 || todate.value.length > 0)) {
+        check6 = false;
+    }
+    else {
+        check6 = true;
+    }
+    var check7 = false;
+    if (days.value.toString().length == 0 || days.value > 0) {
+        check7 = true;
+    }
+    else {
+        check7 = false;
+    }
+    var check8 = false;
+    if ((fromdate.value.length == 0 && todate.value.length == 0) || (fromdate.value.length > 0 && todate.value.length > 0)) {
+        check8 = true;
+    }
+    else {
+        check8 = false;
+    }
+    
+    var check9 = false;
+    if ((checkdate(fromdate.value) && checkdate(todate.value)) || (fromdate.value.length == 0 && todate.value.length == 0)) {
+        check9 = true;
+    }
+    else {
+        check9 = false;
+    }
+
+    var check10 = false;
+    if (tag.value.length == 0 || tags.includes(tag.value)) {
+        check10 = true;
+    }
+    else {
+        check10 = false;
+    }
+    if (check1 && check2 && check3 && check4 && check5 && check6 && check7 && check8 && check9 && check10) {
+        submitbutton.disabled = false;
+    }
+    else {
+        submitbutton.disabled = true;
+    }
+
+    }
+    days.onkeyup = () => {
+    submitbutton.disabled = true;
+    var check1 = false;
+    if (logtype.value == 'no selection') {
+        check1 = false;
+    }
+    else {
+        check1 = true;
+    }
+    var check2 = false;
+    if (below.value.toString().length > 0 && above.value.toString().length > 0) {
+        check2 = false;
+    }
+    else {
+        check2 = true;
+    }
+    var check3 = false;
+    if ((below.value.toString().length > 0 && (upper.value.toString().length > 0 || lower.value.toString().length >0)) || (above.value.toString().length > 0 && (upper.value.toString().length > 0 || lower.value.toString().length >0))) {
+        check3 = false;
+    }
+    else {
+        check3 = true;
+    }
+    var check4 = false;
+    if ((below.value.toString().length == 0 || (!isNaN(below.value))) && (above.value.toString().length == 0 || (!isNaN(above.value))) && (upper.value.toString().length == 0 || (!isNaN(upper.value))) && (lower.value.toString().length == 0 || (!isNaN(lower.value)))) {
+        check4 = true;
+    }
+    else {
+        check4 = false;
+    }
+    var check5 = false;
+    if ((upper.value.toString().length == 0 && lower.value.toString().length == 0) ||  (upper.value.toString().length > 0 && lower.value.toString().length > 0 && upper.value > lower.value)) {
+        check5 = true;
+    }
+    else {
+        check5 = false;
+    }
+    var check6 = false;
+    if (days.value.toString().length > 0 && (fromdate.value.length > 0 || todate.value.length > 0)) {
+        check6 = false;
+    }
+    else {
+        check6 = true;
+    }
+    var check7 = false;
+    if (days.value.toString().length == 0 || days.value > 0) {
+        check7 = true;
+    }
+    else {
+        check7 = false;
+    }
+    var check8 = false;
+    if ((fromdate.value.length == 0 && todate.value.length == 0) || (fromdate.value.length > 0 && todate.value.length > 0)) {
+        check8 = true;
+    }
+    else {
+        check8 = false;
+    }
+    
+    var check9 = false;
+    if ((checkdate(fromdate.value) && checkdate(todate.value)) || (fromdate.value.length == 0 && todate.value.length == 0)) {
+        check9 = true;
+    }
+    else {
+        check9 = false;
+    }
+
+    var check10 = false;
+    if (tag.value.length == 0 || tags.includes(tag.value)) {
+        check10 = true;
+    }
+    else {
+        check10 = false;
+    }
+    if (check1 && check2 && check3 && check4 && check5 && check6 && check7 && check8 && check9 && check10) {
+        submitbutton.disabled = false;
+    }
+    else {
+        submitbutton.disabled = true;
+    }
+
+    }
+    fromdate.onkeyup = () => {
+    submitbutton.disabled = true;
+    var check1 = false;
+    if (logtype.value == 'no selection') {
+        check1 = false;
+    }
+    else {
+        check1 = true;
+    }
+    var check2 = false;
+    if (below.value.toString().length > 0 && above.value.toString().length > 0) {
+        check2 = false;
+    }
+    else {
+        check2 = true;
+    }
+    var check3 = false;
+    if ((below.value.toString().length > 0 && (upper.value.toString().length > 0 || lower.value.toString().length >0)) || (above.value.toString().length > 0 && (upper.value.toString().length > 0 || lower.value.toString().length >0))) {
+        check3 = false;
+    }
+    else {
+        check3 = true;
+    }
+    var check4 = false;
+    if ((below.value.toString().length == 0 || (!isNaN(below.value))) && (above.value.toString().length == 0 || (!isNaN(above.value))) && (upper.value.toString().length == 0 || (!isNaN(upper.value))) && (lower.value.toString().length == 0 || (!isNaN(lower.value)))) {
+        check4 = true;
+    }
+    else {
+        check4 = false;
+    }
+    var check5 = false;
+    if ((upper.value.toString().length == 0 && lower.value.toString().length == 0) ||  (upper.value.toString().length > 0 && lower.value.toString().length > 0 && upper.value > lower.value)) {
+        check5 = true;
+    }
+    else {
+        check5 = false;
+    }
+    var check6 = false;
+    if (days.value.toString().length > 0 && (fromdate.value.length > 0 || todate.value.length > 0)) {
+        check6 = false;
+    }
+    else {
+        check6 = true;
+    }
+    var check7 = false;
+    if (days.value.toString().length == 0 || days.value > 0) {
+        check7 = true;
+    }
+    else {
+        check7 = false;
+    }
+    var check8 = false;
+    if ((fromdate.value.length == 0 && todate.value.length == 0) || (fromdate.value.length > 0 && todate.value.length > 0)) {
+        check8 = true;
+    }
+    else {
+        check8 = false;
+    }
+    
+    var check9 = false;
+    if ((checkdate(fromdate.value) && checkdate(todate.value)) || (fromdate.value.length == 0 && todate.value.length == 0)) {
+        check9 = true;
+    }
+    else {
+        check9 = false;
+    }
+
+    var check10 = false;
+    if (tag.value.length == 0 || tags.includes(tag.value)) {
+        check10 = true;
+    }
+    else {
+        check10 = false;
+    }
+    if (check1 && check2 && check3 && check4 && check5 && check6 && check7 && check8 && check9 && check10) {
+        submitbutton.disabled = false;
+    }
+    else {
+        submitbutton.disabled = true;
+    }
+
+    }
+    todate.onkeyup = () => {
+    submitbutton.disabled = true;
+    var check1 = false;
+    if (logtype.value == 'no selection') {
+        check1 = false;
+    }
+    else {
+        check1 = true;
+    }
+    var check2 = false;
+    if (below.value.toString().length > 0 && above.value.toString().length > 0) {
+        check2 = false;
+    }
+    else {
+        check2 = true;
+    }
+    var check3 = false;
+    if ((below.value.toString().length > 0 && (upper.value.toString().length > 0 || lower.value.toString().length >0)) || (above.value.toString().length > 0 && (upper.value.toString().length > 0 || lower.value.toString().length >0))) {
+        check3 = false;
+    }
+    else {
+        check3 = true;
+    }
+    var check4 = false;
+    if ((below.value.toString().length == 0 || (!isNaN(below.value))) && (above.value.toString().length == 0 || (!isNaN(above.value))) && (upper.value.toString().length == 0 || (!isNaN(upper.value))) && (lower.value.toString().length == 0 || (!isNaN(lower.value)))) {
+        check4 = true;
+    }
+    else {
+        check4 = false;
+    }
+    var check5 = false;
+    if ((upper.value.toString().length == 0 && lower.value.toString().length == 0) ||  (upper.value.toString().length > 0 && lower.value.toString().length > 0 && upper.value > lower.value)) {
+        check5 = true;
+    }
+    else {
+        check5 = false;
+    }
+    var check6 = false;
+    if (days.value.toString().length > 0 && (fromdate.value.length > 0 || todate.value.length > 0)) {
+        check6 = false;
+    }
+    else {
+        check6 = true;
+    }
+    var check7 = false;
+    if (days.value.toString().length == 0 || days.value > 0) {
+        check7 = true;
+    }
+    else {
+        check7 = false;
+    }
+    var check8 = false;
+    if ((fromdate.value.length == 0 && todate.value.length == 0) || (fromdate.value.length > 0 && todate.value.length > 0)) {
+        check8 = true;
+    }
+    else {
+        check8 = false;
+    }
+    
+    var check9 = false;
+    if ((checkdate(fromdate.value) && checkdate(todate.value)) || (fromdate.value.length == 0 && todate.value.length == 0)) {
+        check9 = true;
+    }
+    else {
+        check9 = false;
+    }
+
+    var check10 = false;
+    if (tag.value.length == 0 || tags.includes(tag.value)) {
+        check10 = true;
+    }
+    else {
+        check10 = false;
+    }
+    if (check1 && check2 && check3 && check4 && check5 && check6 && check7 && check8 && check9 && check10) {
+        submitbutton.disabled = false;
+    }
+    else {
+        submitbutton.disabled = true;
+    }
+
+    }
+    message.onkeyup = () => {
+    submitbutton.disabled = true;
+    var check1 = false;
+    if (logtype.value == 'no selection') {
+        check1 = false;
+    }
+    else {
+        check1 = true;
+    }
+    var check2 = false;
+    if (below.value.toString().length > 0 && above.value.toString().length > 0) {
+        check2 = false;
+    }
+    else {
+        check2 = true;
+    }
+    var check3 = false;
+    if ((below.value.toString().length > 0 && (upper.value.toString().length > 0 || lower.value.toString().length >0)) || (above.value.toString().length > 0 && (upper.value.toString().length > 0 || lower.value.toString().length >0))) {
+        check3 = false;
+    }
+    else {
+        check3 = true;
+    }
+    var check4 = false;
+    if ((below.value.toString().length == 0 || (!isNaN(below.value))) && (above.value.toString().length == 0 || (!isNaN(above.value))) && (upper.value.toString().length == 0 || (!isNaN(upper.value))) && (lower.value.toString().length == 0 || (!isNaN(lower.value)))) {
+        check4 = true;
+    }
+    else {
+        check4 = false;
+    }
+    var check5 = false;
+    if ((upper.value.toString().length == 0 && lower.value.toString().length == 0) ||  (upper.value.toString().length > 0 && lower.value.toString().length > 0 && upper.value > lower.value)) {
+        check5 = true;
+    }
+    else {
+        check5 = false;
+    }
+    var check6 = false;
+    if (days.value.toString().length > 0 && (fromdate.value.length > 0 || todate.value.length > 0)) {
+        check6 = false;
+    }
+    else {
+        check6 = true;
+    }
+    var check7 = false;
+    if (days.value.toString().length == 0 || days.value > 0) {
+        check7 = true;
+    }
+    else {
+        check7 = false;
+    }
+    var check8 = false;
+    if ((fromdate.value.length == 0 && todate.value.length == 0) || (fromdate.value.length > 0 && todate.value.length > 0)) {
+        check8 = true;
+    }
+    else {
+        check8 = false;
+    }
+    
+    var check9 = false;
+    if ((checkdate(fromdate.value) && checkdate(todate.value)) || (fromdate.value.length == 0 && todate.value.length == 0)) {
+        check9 = true;
+    }
+    else {
+        check9 = false;
+    }
+
+    var check10 = false;
+    if (tag.value.length == 0 || tags.includes(tag.value)) {
+        check10 = true;
+    }
+    else {
+        check10 = false;
+    }
+    if (check1 && check2 && check3 && check4 && check5 && check6 && check7 && check8 && check9 && check10) {
+        submitbutton.disabled = false;
+    }
+    else {
+        submitbutton.disabled = true;
+    }
+
+    }
+    messagecontains.onkeyup = () => {
+    submitbutton.disabled = true;
+    var check1 = false;
+    if (logtype.value == 'no selection') {
+        check1 = false;
+    }
+    else {
+        check1 = true;
+    }
+    var check2 = false;
+    if (below.value.toString().length > 0 && above.value.toString().length > 0) {
+        check2 = false;
+    }
+    else {
+        check2 = true;
+    }
+    var check3 = false;
+    if ((below.value.toString().length > 0 && (upper.value.toString().length > 0 || lower.value.toString().length >0)) || (above.value.toString().length > 0 && (upper.value.toString().length > 0 || lower.value.toString().length >0))) {
+        check3 = false;
+    }
+    else {
+        check3 = true;
+    }
+    var check4 = false;
+    if ((below.value.toString().length == 0 || (!isNaN(below.value))) && (above.value.toString().length == 0 || (!isNaN(above.value))) && (upper.value.toString().length == 0 || (!isNaN(upper.value))) && (lower.value.toString().length == 0 || (!isNaN(lower.value)))) {
+        check4 = true;
+    }
+    else {
+        check4 = false;
+    }
+    var check5 = false;
+    if ((upper.value.toString().length == 0 && lower.value.toString().length == 0) ||  (upper.value.toString().length > 0 && lower.value.toString().length > 0 && upper.value > lower.value)) {
+        check5 = true;
+    }
+    else {
+        check5 = false;
+    }
+    var check6 = false;
+    if (days.value.toString().length > 0 && (fromdate.value.length > 0 || todate.value.length > 0)) {
+        check6 = false;
+    }
+    else {
+        check6 = true;
+    }
+    var check7 = false;
+    if (days.value.toString().length == 0 || days.value > 0) {
+        check7 = true;
+    }
+    else {
+        check7 = false;
+    }
+    var check8 = false;
+    if ((fromdate.value.length == 0 && todate.value.length == 0) || (fromdate.value.length > 0 && todate.value.length > 0)) {
+        check8 = true;
+    }
+    else {
+        check8 = false;
+    }
+    
+    var check9 = false;
+    if ((checkdate(fromdate.value) && checkdate(todate.value)) || (fromdate.value.length == 0 && todate.value.length == 0)) {
+        check9 = true;
+    }
+    else {
+        check9 = false;
+    }
+
+    var check10 = false;
+    if (tag.value.length == 0 || tags.includes(tag.value)) {
+        check10 = true;
+    }
+    else {
+        check10 = false;
+    }
+    if (check1 && check2 && check3 && check4 && check5 && check6 && check7 && check8 && check9 && check10) {
+        submitbutton.disabled = false;
+    }
+    else {
+        submitbutton.disabled = true;
+    }
+
+    }
+    tag.onkeyup = () => {
+    submitbutton.disabled = true;
+    var check1 = false;
+    if (logtype.value == 'no selection') {
+        check1 = false;
+    }
+    else {
+        check1 = true;
+    }
+    var check2 = false;
+    if (below.value.toString().length > 0 && above.value.toString().length > 0) {
+        check2 = false;
+    }
+    else {
+        check2 = true;
+    }
+    var check3 = false;
+    if ((below.value.toString().length > 0 && (upper.value.toString().length > 0 || lower.value.toString().length >0)) || (above.value.toString().length > 0 && (upper.value.toString().length > 0 || lower.value.toString().length >0))) {
+        check3 = false;
+    }
+    else {
+        check3 = true;
+    }
+    var check4 = false;
+    if ((below.value.toString().length == 0 || (!isNaN(below.value))) && (above.value.toString().length == 0 || (!isNaN(above.value))) && (upper.value.toString().length == 0 || (!isNaN(upper.value))) && (lower.value.toString().length == 0 || (!isNaN(lower.value)))) {
+        check4 = true;
+    }
+    else {
+        check4 = false;
+    }
+    var check5 = false;
+    if ((upper.value.toString().length == 0 && lower.value.toString().length == 0) ||  (upper.value.toString().length > 0 && lower.value.toString().length > 0 && upper.value > lower.value)) {
+        check5 = true;
+    }
+    else {
+        check5 = false;
+    }
+    var check6 = false;
+    if (days.value.toString().length > 0 && (fromdate.value.length > 0 || todate.value.length > 0)) {
+        check6 = false;
+    }
+    else {
+        check6 = true;
+    }
+    var check7 = false;
+    if (days.value.toString().length == 0 || days.value > 0) {
+        check7 = true;
+    }
+    else {
+        check7 = false;
+    }
+    var check8 = false;
+    if ((fromdate.value.length == 0 && todate.value.length == 0) || (fromdate.value.length > 0 && todate.value.length > 0)) {
+        check8 = true;
+    }
+    else {
+        check8 = false;
+    }
+    
+    var check9 = false;
+    if ((checkdate(fromdate.value) && checkdate(todate.value)) || (fromdate.value.length == 0 && todate.value.length == 0)) {
+        check9 = true;
+    }
+    else {
+        check9 = false;
+    }
+
+    var check10 = false;
+    if (tag.value.length == 0 || tags.includes(tag.value)) {
+        check10 = true;
+    }
+    else {
+        check10 = false;
+    }
+    if (check1 && check2 && check3 && check4 && check5 && check6 && check7 && check8 && check9 && check10) {
+        submitbutton.disabled = false;
+    }
+    else {
+        submitbutton.disabled = true;
+    }
+
+    }
+    status.onchange = () => {
+    submitbutton.disabled = true;
+    var check1 = false;
+    if (logtype.value == 'no selection') {
+        check1 = false;
+    }
+    else {
+        check1 = true;
+    }
+    var check2 = false;
+    if (below.value.toString().length > 0 && above.value.toString().length > 0) {
+        check2 = false;
+    }
+    else {
+        check2 = true;
+    }
+    var check3 = false;
+    if ((below.value.toString().length > 0 && (upper.value.toString().length > 0 || lower.value.toString().length >0)) || (above.value.toString().length > 0 && (upper.value.toString().length > 0 || lower.value.toString().length >0))) {
+        check3 = false;
+    }
+    else {
+        check3 = true;
+    }
+    var check4 = false;
+    if ((below.value.toString().length == 0 || (!isNaN(below.value))) && (above.value.toString().length == 0 || (!isNaN(above.value))) && (upper.value.toString().length == 0 || (!isNaN(upper.value))) && (lower.value.toString().length == 0 || (!isNaN(lower.value)))) {
+        check4 = true;
+    }
+    else {
+        check4 = false;
+    }
+    var check5 = false;
+    if ((upper.value.toString().length == 0 && lower.value.toString().length == 0) ||  (upper.value.toString().length > 0 && lower.value.toString().length > 0 && upper.value > lower.value)) {
+        check5 = true;
+    }
+    else {
+        check5 = false;
+    }
+    var check6 = false;
+    if (days.value.toString().length > 0 && (fromdate.value.length > 0 || todate.value.length > 0)) {
+        check6 = false;
+    }
+    else {
+        check6 = true;
+    }
+    var check7 = false;
+    if (days.value.toString().length == 0 || days.value > 0) {
+        check7 = true;
+    }
+    else {
+        check7 = false;
+    }
+    var check8 = false;
+    if ((fromdate.value.length == 0 && todate.value.length == 0) || (fromdate.value.length > 0 && todate.value.length > 0)) {
+        check8 = true;
+    }
+    else {
+        check8 = false;
+    }
+    
+    var check9 = false;
+    if ((checkdate(fromdate.value) && checkdate(todate.value)) || (fromdate.value.length == 0 && todate.value.length == 0)) {
+        check9 = true;
+    }
+    else {
+        check9 = false;
+    }
+
+    var check10 = false;
+    if (tag.value.length == 0 || tags.includes(tag.value)) {
+        check10 = true;
+    }
+    else {
+        check10 = false;
+    }
+    if (check1 && check2 && check3 && check4 && check5 && check6 && check7 && check8 && check9 && check10) {
+        submitbutton.disabled = false;
+    }
+    else {
+        submitbutton.disabled = true;
+    }
+
+    }
+    sender.onkeyup = () => {
+    submitbutton.disabled = true;
+    var check1 = false;
+    if (logtype.value == 'no selection') {
+        check1 = false;
+    }
+    else {
+        check1 = true;
+    }
+    var check2 = false;
+    if (below.value.toString().length > 0 && above.value.toString().length > 0) {
+        check2 = false;
+    }
+    else {
+        check2 = true;
+    }
+    var check3 = false;
+    if ((below.value.toString().length > 0 && (upper.value.toString().length > 0 || lower.value.toString().length >0)) || (above.value.toString().length > 0 && (upper.value.toString().length > 0 || lower.value.toString().length >0))) {
+        check3 = false;
+    }
+    else {
+        check3 = true;
+    }
+    var check4 = false;
+    if ((below.value.toString().length == 0 || (!isNaN(below.value))) && (above.value.toString().length == 0 || (!isNaN(above.value))) && (upper.value.toString().length == 0 || (!isNaN(upper.value))) && (lower.value.toString().length == 0 || (!isNaN(lower.value)))) {
+        check4 = true;
+    }
+    else {
+        check4 = false;
+    }
+    var check5 = false;
+    if ((upper.value.toString().length == 0 && lower.value.toString().length == 0) ||  (upper.value.toString().length > 0 && lower.value.toString().length > 0 && upper.value > lower.value)) {
+        check5 = true;
+    }
+    else {
+        check5 = false;
+    }
+    var check6 = false;
+    if (days.value.toString().length > 0 && (fromdate.value.length > 0 || todate.value.length > 0)) {
+        check6 = false;
+    }
+    else {
+        check6 = true;
+    }
+    var check7 = false;
+    if (days.value.toString().length == 0 || days.value > 0) {
+        check7 = true;
+    }
+    else {
+        check7 = false;
+    }
+    var check8 = false;
+    if ((fromdate.value.length == 0 && todate.value.length == 0) || (fromdate.value.length > 0 && todate.value.length > 0)) {
+        check8 = true;
+    }
+    else {
+        check8 = false;
+    }
+    
+    var check9 = false;
+    if ((checkdate(fromdate.value) && checkdate(todate.value)) || (fromdate.value.length == 0 && todate.value.length == 0)) {
+        check9 = true;
+    }
+    else {
+        check9 = false;
+    }
+
+    var check10 = false;
+    if (tag.value.length == 0 || tags.includes(tag.value)) {
+        check10 = true;
+    }
+    else {
+        check10 = false;
+    }
+    if (check1 && check2 && check3 && check4 && check5 && check6 && check7 && check8 && check9 && check10) {
+        submitbutton.disabled = false;
+    }
+    else {
+        submitbutton.disabled = true;
+    }
+
+    }
+    transfertype.onkeyup = () => {
+    submitbutton.disabled = true;
+    var check1 = false;
+    if (logtype.value == 'no selection') {
+        check1 = false;
+    }
+    else {
+        check1 = true;
+    }
+    var check2 = false;
+    if (below.value.toString().length > 0 && above.value.toString().length > 0) {
+        check2 = false;
+    }
+    else {
+        check2 = true;
+    }
+    var check3 = false;
+    if ((below.value.toString().length > 0 && (upper.value.toString().length > 0 || lower.value.toString().length >0)) || (above.value.toString().length > 0 && (upper.value.toString().length > 0 || lower.value.toString().length >0))) {
+        check3 = false;
+    }
+    else {
+        check3 = true;
+    }
+    var check4 = false;
+    if ((below.value.toString().length == 0 || (!isNaN(below.value))) && (above.value.toString().length == 0 || (!isNaN(above.value))) && (upper.value.toString().length == 0 || (!isNaN(upper.value))) && (lower.value.toString().length == 0 || (!isNaN(lower.value)))) {
+        check4 = true;
+    }
+    else {
+        check4 = false;
+    }
+    var check5 = false;
+    if ((upper.value.toString().length == 0 && lower.value.toString().length == 0) ||  (upper.value.toString().length > 0 && lower.value.toString().length > 0 && upper.value > lower.value)) {
+        check5 = true;
+    }
+    else {
+        check5 = false;
+    }
+    var check6 = false;
+    if (days.value.toString().length > 0 && (fromdate.value.length > 0 || todate.value.length > 0)) {
+        check6 = false;
+    }
+    else {
+        check6 = true;
+    }
+    var check7 = false;
+    if (days.value.toString().length == 0 || days.value > 0) {
+        check7 = true;
+    }
+    else {
+        check7 = false;
+    }
+    var check8 = false;
+    if ((fromdate.value.length == 0 && todate.value.length == 0) || (fromdate.value.length > 0 && todate.value.length > 0)) {
+        check8 = true;
+    }
+    else {
+        check8 = false;
+    }
+    
+    var check9 = false;
+    if ((checkdate(fromdate.value) && checkdate(todate.value)) || (fromdate.value.length == 0 && todate.value.length == 0)) {
+        check9 = true;
+    }
+    else {
+        check9 = false;
+    }
+
+    var check10 = false;
+    if (tag.value.length == 0 || tags.includes(tag.value)) {
+        check10 = true;
+    }
+    else {
+        check10 = false;
+    }
+    if (check1 && check2 && check3 && check4 && check5 && check6 && check7 && check8 && check9 && check10) {
+        submitbutton.disabled = false;
+    }
+    else {
+        submitbutton.disabled = true;
+    }
+    }
+
+
+    
+    logtype.onchange = () => {
+        if (logtype.value == "personal" || logtype.value == "global" || logtype.value == "friend") {
+        sender.value = '';
+        recipient.value = '';
+        below.value = '';
+        above.value = '';
+        upper.value = '';
+        lower.value = '';
+        days.value = '';
+        fromdate.value = '';
+        todate.value = '';
+        message.value = '';
+        messagecontains.value = '';
+        tag.value = '';
+        sender.readOnly = false;
+        transferrow.style.display = 'none';
+        transfertypelabel.style.display = 'none';
+        requestrow.style.display = 'none';
+        requestlabel.style.display = 'none';
+        msgtagrow.style.display = 'flex';
+        descriptionrow.style.display = 'flex';
+        
+    }
+
+    if (logtype.value == "request") {
+        sender.value = '';
+        recipient.value = '';
+        below.value = '';
+        above.value = '';
+        upper.value = '';
+        lower.value = '';
+        days.value = '';
+        fromdate.value = '';
+        todate.value = '';
+        message.value = '';
+        messagecontains.value = '';
+        tag.value = '';
+        sender.readOnly = false;
+        transferrow.style.display = 'none';
+        transfertypelabel.style.display = 'none';
+        requestrow.style.display = 'flex';
+        requestlabel.style.display = 'flex';
+        msgtagrow.style.display = 'flex';
+        descriptionrow.style.display = 'flex';
+    }
+
+    if (logtype.value == "transfer") {
+        recipient.value = '';
+        below.value = '';
+        above.value = '';
+        upper.value = '';
+        lower.value = '';
+        days.value = '';
+        fromdate.value = '';
+        todate.value = '';
+        message.value = '';
+        messagecontains.value = '';
+        tag.value = '';
+        msgtagrow.style.display = 'none';
+        descriptionrow.style.display = 'none';
+        transferrow.style.display = 'flex';
+        transfertypelabel.style.display = 'flex';
+        requestrow.style.display = 'none';
+        requestlabel.style.display = 'none';
+        sender.value = userID;
+        sender.readOnly = true;
+    }
+
+    if (logtype.value == "personal") {
+    logexplanation.innerHTML = 'personalLog displays transactions that involve you.'
+}
+
+if (logtype.value == "global") {
+    logexplanation.innerHTML = 'globalLog displays visible transactions that involve any Venmo user.'
+}
+
+if (logtype.value == "friend") {
+    logexplanation.innerHTML = 'friendLog displays visible transactions that involve you or your friends.';
+}
+
+if (logtype.value == "request") {
+    logexplanation.innerHTML = 'requestLog displays incoming and outgoing requests.';
+}
+
+if (logtype.value == "transfer") {
+    logexplanation.innerHTML = 'transferLog displays your bank transfers.';
+}
+
+if (logtype.value == "no selection") {
+    logexplanation.innerHTML = '';
+}
+
+
+    submitbutton.disabled = true;
+    var check1 = false;
+    if (logtype.value == 'no selection') {
+        check1 = false;
+    }
+    else {
+        check1 = true;
+    }
+    var check2 = false;
+    if (below.value.toString().length > 0 && above.value.toString().length > 0) {
+        check2 = false;
+    }
+    else {
+        check2 = true;
+    }
+    var check3 = false;
+    if ((below.value.toString().length > 0 && (upper.value.toString().length > 0 || lower.value.toString().length >0)) || (above.value.toString().length > 0 && (upper.value.toString().length > 0 || lower.value.toString().length >0))) {
+        check3 = false;
+    }
+    else {
+        check3 = true;
+    }
+    var check4 = false;
+    if ((below.value.toString().length == 0 || (!isNaN(below.value))) && (above.value.toString().length == 0 || (!isNaN(above.value))) && (upper.value.toString().length == 0 || (!isNaN(upper.value))) && (lower.value.toString().length == 0 || (!isNaN(lower.value)))) {
+        check4 = true;
+    }
+    else {
+        check4 = false;
+    }
+    var check5 = false;
+    if ((upper.value.toString().length == 0 && lower.value.toString().length == 0) ||  (upper.value.toString().length > 0 && lower.value.toString().length > 0 && upper.value > lower.value)) {
+        check5 = true;
+    }
+    else {
+        check5 = false;
+    }
+    var check6 = false;
+    if (days.value.toString().length > 0 && (fromdate.value.length > 0 || todate.value.length > 0)) {
+        check6 = false;
+    }
+    else {
+        check6 = true;
+    }
+    var check7 = false;
+    if (days.value.toString().length == 0 || days.value > 0) {
+        check7 = true;
+    }
+    else {
+        check7 = false;
+    }
+    var check8 = false;
+    if ((fromdate.value.length == 0 && todate.value.length == 0) || (fromdate.value.length > 0 && todate.value.length > 0)) {
+        check8 = true;
+    }
+    else {
+        check8 = false;
+    }
+    
+    var check9 = false;
+    if ((checkdate(fromdate.value) && checkdate(todate.value)) || (fromdate.value.length == 0 && todate.value.length == 0)) {
+        check9 = true;
+    }
+    else {
+        check9 = false;
+    }
+
+    var check10 = false;
+    if (tag.value.length == 0 || tags.includes(tag.value)) {
+        check10 = true;
+    }
+    else {
+        check10 = false;
+    }
+    if (check1 && check2 && check3 && check4 && check5 && check6 && check7 && check8 && check9 && check10) {
+        submitbutton.disabled = false;
+    }
+    else {
+        submitbutton.disabled = true;
+    }
+
+
+    }
+
+});
+</script>
+
+{% if message|length > 0 %}
+<div class="alert alert-danger alert-dismissible fade show" role="alert" me-2>
+    {{ message }}
+    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+      <span aria-hidden="true">&times;</span>
+    </button>
+  </div>
+{% endif %}
+
+
+    <div class="row mt-2 mb-2">
+
+        <div class="col-md-3"></div>
+
+        <div class="col-md-6">
+
+            <h3 class="text-center mt-2 mb-2">Logs</h3>
+            <form action="/logs" method="post">
+
+                <div class="row">
+                    <select class="custom-select custom-select-lg mb-2 mt-3 mr-sm-2" id="logtype" name="logtype">
+                        {% if log_selection == '' %}
+                        <option disabled selected value="no selection">Select Log Type</option>
+                        {% else %}
+                        <option disabled value="no selection">Select Log Type</option>
+                        {% endif %}
+                        {% if log_selection == 'personal' %}
+                        <option selected value="personal">Personal</option>
+                        {% else %}
+                        <option value="personal">Personal</option>
+                        {% endif %}
+                        {% if log_selection == 'friend' %}
+                        <option selected value="friend">Friend</option>
+                        {% else %}
+                        <option value="friend">Friend</option>
+                        {% endif %}
+                        {% if log_selection == "global" %}
+                        <option selected value="global">Global</option>
+                        {% else %}
+                        <option value="global">Global</option>
+                        {% endif %}
+                        {% if log_selection == "request" %}
+                        <option selected value="request">Request</option>
+                        {% else %}
+                        <option value="request">Request</option>
+                        {% endif %}
+                        {% if log_selection == "transfer" %}
+                        <option selected value="transfer">Transfer</option>
+                        {% else %}
+                        <option value="transfer">Transfer</option>
+                        {% endif %}
+                      </select>
+
+
+                </div>
+                <p class="text-center text-muted"><small id="logexplanation"></small></p>
+
+                <div class="hr"></div>
+
+            
+                <h3 class="text-left mt-3 mb-2">Filters:</h3>
+
+                
+                <div class="row mt-2 mb-2">
+
+                    <div class="col-md-6">
+                        <div class="form-row mb">
+                            <strong>Sender</strong>
+                        </div>
+        
+                    
+                        <div class="form-row mb-1">
+                            
+                            <div class = "input-group">
+                                <div class="input-group-prepend">
+                                  <span class="input-group-text" id="senderPrepend">@</span>
+                                </div>
+                                <input type="text" class="form-control" id="sender" name="sender" placeholder="Username" autocomplete="off">
+                            </div>
+        
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="form-row mb">
+                            <strong>Recipient</strong>
+                        </div>
+        
+                    
+                        <div class="form-row mb-1">
+                            
+                            <div class = "input-group">
+                                <div class="input-group-prepend">
+                                  <span class="input-group-text" id="recipientPrepend">@</span>
+                                </div>
+                                <input type="text" class="form-control" id="recipient" name="recipient" placeholder="Username" autocomplete="off">
+                            </div>
+        
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row mb-2">
+
+                    <div class="col-md-6">
+                        <div class="form-row mb">
+                            <strong>Amount</strong>
+                        </div>
+        
+                    
+                        <div class="form-row mb-1">
+                            
+                            <div class = "input-group">
+                                <div class="input-group-prepend">
+                                  <span class="input-group-text" id="belowPrepend">Below</span>
+                                </div>
+                                <input type="number" class="form-control" id="below" name="below" placeholder="$0.00" step="any" autocomplete="off">
+                            </div>
+        
+                        </div>
+                        <div class="form-row mb-1">
+                            
+                            <div class = "input-group">
+                                <div class="input-group-prepend">
+                                  <span class="input-group-text" id="abovePrepend">Above</span>
+                                </div>
+                                <input type="number" class="form-control" id="above" name="above" placeholder="$0.00" step="any" autocomplete="off">
+                            </div>
+        
+                        </div>
+
+                        <div class="form-row mb-1">
+                            
+                            <div class = "input-group">
+                                <div class="input-group-prepend">
+                                  <span class="input-group-text" id="rangePrepend">Range</span>
+                                </div>
+                                <input type="number" class="form-control" id="lower" name="lower" placeholder="From" step="any" autocomplete="off">
+                                <input type="number" class="form-control" id="upper" name="upper" placeholder="To" step="any" autocomplete="off">
+                            </div>
+
+                    </div>
+                </div>
+
+                    <div class="col-md-6">
+                        <div class="form-row mb">
+                            <strong>Date</strong>
+                        </div>
+        
+                    
+                        <div class="form-row mb-1">
+                            
+                            <div class = "input-group">
+                                <div class="input-group-prepend">
+                                  <span class="input-group-text" id="daysPrepend">Past</span>
+                                </div>
+                                <input type="number" class="form-control" id="days" name="days" placeholder="number of days" autocomplete="off">
+                            </div>
+        
+                        </div>
+
+                        <div class="form-row mb-1">
+                            
+                            <div class = "input-group">
+                                <div class="input-group-prepend">
+                                  <span class="input-group-text" id="datePrepend">Range &nbsp <small> mm/dd/yy</small></span>
+                                </div>
+                                <input type="text" class="form-control" id="fromdate" name="fromdate" placeholder="From" autocomplete="off">
+                                <input type="text" class="form-control" id="todate" name="todate" placeholder="To" autocomplete="off">
+                            </div>
+        
+                        </div>
+
+                    </div>
+                </div>
+
+
+                <div class="row mb-1" id="descriptionrow">
+
+                    <div class="col-md-12">
+
+                        <div class="form-row mb">
+                            <strong>Description</strong>
+                        </div>
+
+                            <div class="form-row mb-1">
+                            
+                                <div class = "input-group">
+                                    <div class="input-group-prepend">
+                                      <span class="input-group-text" id="belowPrepend">Message Match</span>
+                                    </div>
+                                    <input type="text" class="form-control" id="message" name="message" placeholder="Text" autocomplete="off">
+                                </div>
+        
+
+                        </div>
+
+                    </div>
+                    </div>
+                        <div class="row mb-1" id="msgtagrow">
+                        
+
+                            <div class="col-md-6">
+                                <div class="form-row mb-1">
+                                
+                                    <div class = "input-group">
+                                        <div class="input-group-prepend">
+                                        <span class="input-group-text" id="abovePrepend">Message Contains</span>
+                                        </div>
+                                        <input type="text" class="form-control" id="messagecontains" name="messagecontains" placeholder="Text" autocomplete="off">
+                                    </div>
+                
+                                </div>
+                            </div>
+                                
+                            <div class="col-md-6">
+                                <div class="form-row mb-1">
+                                    <div class = "input-group">
+                                        <div class="input-group-prepend">
+                                        <span class="input-group-text" id="abovePrepend">Tag</span>
+                                        </div>
+                                        <input type="text" class="form-control" id="tag" name="tag" placeholder="Text" autocomplete="off">
+                                    </div>
+            
+                                </div>
+                            </div>
+
+                    </div>
+
+                    <div class="form-row mb" id="transfertypelabel" style="display: none;">
+                        <strong>Transfer Type</strong>
+                    </div>
+
+                    <div class="form-row mb-2" id="transferrow" style="display: none;">
+                        <select class="custom-select custom-select" id="transfertype" name="transfertype">
+                            <option selected value="no selection">Select Transfer Type</option>
+                            <option value="instant">&#9889; Instant</option>
+                            <option value="no fee">&#128184; No Fee</option>
+                          </select>  
+                    </div>
+
+                    <div class="form-row mb" id="requestlabel" style="display: none;">
+                        <strong>Request Status</strong>
+                    </div>
+
+                    <div class="form-row mb-2" id="requestrow" style="display: none;">
+                        <select class="custom-select custom-select" id="status" name="status">
+                            <option selected value="no selection">Select Request Status</option>
+                            <option value="pending">&#8987; Pending</option>
+                            <option value="accepted">&#9989; Accepted</option>
+                            <option value="denied">&#x1F6AB; Denied</option>
+                          </select>  
+                    </div>
+
+                
+                    <button id= "submitbutton" class="btn btn-primary btn-lg mt-2" type="submit">Get Log</button>
+                
+            </form>
+
+        </div>
+
+        <div class="col-md-3"></div>
+
+    </div>
+
+</body>
+
+{% endblock %}
