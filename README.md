@@ -29,7 +29,7 @@ Description: The pay command allows a user to send a payment to another user in 
 ```tags = ["food", "groceries", "rent", "utilities", "sports", "fun", "transportation", "drinks", "business", "tickets", "gift", "gas"]```
 
 **```Linking a Bank```**\
-Description: Users can link a bank to their Venmo account using their bankID (a 9-digit routing number). A user must link their bank as a precursor to using other features such as ```deposit``` and ```transfer```.
+Description: Users can link a bank to their Venmo account using their bankID (a 9-digit routing number). A user must link their bank as a precursor to using other features such as ```deposit``` and ```transfer```. Users can link a bank from multiple parts of the site, including the ```settings```, ```deposit```, and ```transfer``` pages.
 
 **```Requests```**\
 Description: Users can request a payment from another user in the payment ecosystem. Every request includes an amount and request message (taken as input from the requester), and a date and requestID (calculated by our program). Senders have the option to specify a ```tag``` for the request. Once the request is sent, the requested user will be able to ```accept request``` or ```deny request```.
@@ -37,13 +37,13 @@ Description: Users can request a payment from another user in the payment ecosys
 **```Accepting and Rejecting Requests```**\
 Description: The acceptrequest command allows users to accept incoming payment requests that have been sent by one of their Venmo friends. Users have the option to select a ```privacy``` for the transaction when accepting a request. If no privacy is selected, the payment will use the default privacy settings selected by the requester and the sender.
 
+<img src="https://github.com/SukhmKang/venmo-project/blob/main/Screenshots/Accept:Deny%20Requests.png" width="500">
 
 **```Bank Transfers```**\
 Description: Transfers allows a user to transfer money out of their Venmo balance and into their bank account. Just like in Venmo, users have two options when initiating a transfer: "instant" and "no fee." Transfers are viewable in a user's ```personalLog``` and ```transferLog``` and fees paid are tracked on a user's profile (accessible on the ```home``` page).
 
 **```Deposit```**\
-Description: Deposit allows users to deposit money into their Venmo balance. To deposit money into their Venmo account, a user must first link a bank and verify their account.
-
+Description: Deposit allows users to deposit money into their Venmo balance. To deposit money into their Venmo account, a user must first link a bank and verify their account. If users do not have a bank linked, the deposit page give them option to input a bank temporarily, with the option of making it a default bank.
 
 **```venmo.py unrequest userID paymentID```**\
 Description:
