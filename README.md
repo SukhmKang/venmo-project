@@ -57,46 +57,24 @@ Description: Deposit allows users to deposit money into their Venmo balance. To 
 <img src="https://github.com/SukhmKang/venmo-project/blob/main/Screenshots/Make%20Default.gif" width="500">
 
 **```Settings```**\
-Description: On the settings page, the user can 
+Description: On the settings page, the user can ```verify``` their account, ```link``` a bank, set a ```default privacy```, and change their ```password```.
 
-**```venmo.py friend userID friendID'```**\
+<img src="https://github.com/SukhmKang/venmo-project/blob/main/Screenshots/Settings.png" width="500">
+
+**```personalLog```**\
+Description: For the ```personalLog``` as well as the rest of the logs, the user can apply a variety of filters so that the log only shows the payments that the user wants to see.
+
+**```friendLog```**\
 Description:
 
-**```venmo.py balance userID password```**\
+**```globalLog```**\
 Description:
 
-**```venmo.py adduser userID password accounttype```**\
+**```requestLog```**\
 Description:
 
-**```venmo.py verify userID password SSN```**\
+**``transferLog```**\
 Description:
-
-**```venmo.py unfriend userID friendID```**\
-Description:
-
-**```venmo.py setprivacy userID privacy```**\
-Description:
-
-**```venmo.py updateprivacy userID password privacy```**\
-Description:
-
-**```venmo.py transactionprivacy userID paymentID privacy```**\
-Description:
-
-**```venmo.py globallog userID [filters]```**\
-Description:
-
-**```venmo.py friendlog userID friendID [filters]```**\
-Description:
-
-**```venmo.py personallog userID [filters]```**\
-Description:
-
-**```venmo.py requestlog userID [-type outgoing or -type incoming]```**\
-Description:
-
-**```venmo.py viewprofile userID```**\
-Description: The viewprofile command allows a user to see their account profile which includes their userID, balance, verification status, number of friends, date of account creation, and aggregate fees. See examples of [user profiles](#user-profiles) below.
 
 ## Example Database
 
