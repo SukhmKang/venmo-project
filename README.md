@@ -1,13 +1,15 @@
 # Venmo.py
 **By Ishan Balakrishnan & Sukhm Kang**
 
-This project attempts to mimic several of the core commands present in the Venmo application (https://venmo.com/), while managing a central database of user information ([users table](#user-database-usersdb)) and recording transaction histories ([paymentLog table](#transactions-database-paymentlogdb)) for users within the payment ecosystem. The purpose of this project was to explore the ways a company like Venmo manages a major database while retrieving information from its databases to perform a multitude of commands in a way that optimizes for efficient runtime and storage.
+This project recreates several of the core commands present in the Venmo application (https://venmo.com/), while managing a central database of user information and recording transaction histories for users within the payment ecosystem. The purpose of this project was to explore the ways a company like Venmo manages a major database while retrieving information from its databases to perform a multitude of commands in a way that optimizes for efficient runtime and storage.
 
 <img src="https://github.com/SukhmKang/passion-projects/blob/main/Venmo.py%20Image.png" width="350">
 
 ## Built With
 
 **Python** (https://www.python.org/) \
+**Flask** (https://flask.palletsprojects.com/en/2.0.x/) \
+**Bootstrap** (https://getbootstrap.com/) \
 **SQLite** (https://www.sqlite.org/index.html)
 
 ## Commands
@@ -16,42 +18,32 @@ This project attempts to mimic several of the core commands present in the Venmo
 
 Our project enables users to create and operate accounts within a payment environment similar to Venmo's. These commands will allow users to friend users, complete transactions (pay, request, deposit, transfer, etc.), configure settings, and view filterable logs of transactions within their Venmo ecosystem.
 
-Users have access to several commands including:
-```
-cmds = ["pay","linkbank","override","request","transfer","deposit","acceptrequest","unrequest","denyrequest",
-"friend","balance","adduser","verify","unfriend","setprivacy","updateprivacy","transactionprivacy","globallog",
-"friendlog","personallog","requestlog","viewprofile"]
-```
 ### Descriptions & Usage
 
-Note: several of the commands below can take optional arguments; optional parameters will be indicated using the following format: \
-```cmd arg1 arg2 [-optionalParamName optionalParamValue]```
-
-Commands:
+Features:
 
 
-**```venmo.py pay senderID recipientID amount message [-tag tag -privacy privacy]```**\
-Description: The pay command allows a user to send a payment to another user in the payment ecosystem. Every payment includes an amount and payment message (taken as input from the sender), and a date and unique paymentID (calculated by our program). Senders have the option to specify a ```-privacy``` for the payment or utilize their default privacy settings. Senders also have the option to ```-tag``` payments to one of the following categories:
+**```Payment```**\
+Description: The pay command allows a user to send a payment to another user in the payment ecosystem. Every payment includes an amount and payment message (taken as input from the sender), a date, and a unique paymentID (calculated by our program). Senders have the option to specify a ```privacy``` for the payment or utilize their default privacy settings. Senders also have the option to ```tag``` payments to one of the following categories:
 
 ```tags = ["food", "groceries", "rent", "utilities", "sports", "fun", "transportation", "drinks", "business", "tickets", "gift", "gas"]```
 
-**```venmo.py linkbank userID bankID```**\
-Description: The linkbank command allows a new user to link a bank to their Venmo account using their bankID (a 9-digit routing number). A user must link their bank as a precursor to using other commands such as ```deposit```.
+**```Linking a Bank```**\
+Description: Users can link a bank to their Venmo account using their bankID (a 9-digit routing number). A user must link their bank as a precursor to using other features such as ```deposit``` and ```transfer```.
 
-**```venmo.py override userID password bankID```**\
-Description: The override command allows a user to change their bank settings and switch to a new bankID. Unlike the linkbank command (which is meant for first-time use when a user needs to initially setup their bank), ```override``` is password-protected. In order for the user's bankID changes to be saved, the password must be entered correctly. 
+**```Requests```**\
+Description: Users can request a payment from another user in the payment ecosystem. Every request includes an amount and request message (taken as input from the requester), and a date and requestID (calculated by our program). Senders have the option to specify a ```tag``` for the request. Once the request is sent, the requested user will be able to ```accept request``` or ```deny request```.
 
-**```venmo.py request userID friendID amount message [-tag tag]```**\
-Description: The request command allows a user to request a payment from another user in the payment ecosystem. Every request includes an amount and request message (taken as input from the requester), and a date and requestID (calculated by our program). Senders have the option to specify a ```-tag``` for the request. Once the request is sent, the requested user will be able to ```acceptrequest``` or ```denyrequest```, and the requester will always have the option to ```unrequest```.
-
-**```venmo.py transfer userID amount [-type instant or -type "no fee"]```**\
-Description: The transfer command allows a user to transfer money out of their Venmo balance and into their bank account. Just like in Venmo, users have two options when initiating a transfer: "instant" and "no fee." If no option is selected, by default the transfer will be a "no fee" transaction. Transfers are viewable in a user's ```personallog``` and fees paid are tracked on a user's profile (accessible using the ```viewprofile``` command).
-
-**```venmo.py deposit userID amount```**\
-Description: The deposit command allows users to deposit money into their Venmo balance (it is the opposite of the ```transfer``` command). To deposit money into their Venmo account, a user must first execute the ```linkbank``` and ```verify``` commands.
-
-**```venmo.py acceptrequest senderID paymentID [-privacy privacy]```**\
+**```Accepting and Rejecting Requests```**\
 Description: The acceptrequest command allows users to accept incoming payment requests that have been sent by one of their Venmo friends. Users have the option to select a ```privacy``` for the transaction when accepting a request. If no privacy is selected, the payment will use the default privacy settings selected by the requester and the sender.
+
+
+**```Bank Transfers```**\
+Description: Transfers allows a user to transfer money out of their Venmo balance and into their bank account. Just like in Venmo, users have two options when initiating a transfer: "instant" and "no fee." Transfers are viewable in a user's ```personalLog``` and ```transferLog``` and fees paid are tracked on a user's profile (accessible on the ```home``` page).
+
+**```Deposit```**\
+Description: Deposit allows users to deposit money into their Venmo balance. To deposit money into their Venmo account, a user must first link a bank and verify their account.
+
 
 **```venmo.py unrequest userID paymentID```**\
 Description:
