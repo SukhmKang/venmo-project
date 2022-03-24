@@ -22,6 +22,9 @@ Our project enables users to create and operate accounts within a payment enviro
 
 Features:
 
+**```Homepage```**\
+Description: The homepage hosts a variety of core features for the user. The user can see their profile, including their balance and profile picture. On the homepage, the user also has access to previews of all 5 logs offered by the program.
+
 
 **```Payment```**\
 Description: The pay command allows a user to send a payment to another user in the payment ecosystem. Every payment includes an amount and payment message (taken as input from the sender), a date, and a unique paymentID (calculated by our program). Senders have the option to specify a ```privacy``` for the payment or utilize their default privacy settings. Senders also have the option to ```tag``` payments to one of the following categories:
@@ -43,14 +46,15 @@ Description: The acceptrequest command allows users to accept incoming payment r
 Description: Transfers allows a user to transfer money out of their Venmo balance and into their bank account. Just like in Venmo, users have two options when initiating a transfer: "instant" and "no fee." Transfers are viewable in a user's ```personalLog``` and ```transferLog``` and fees paid are tracked on a user's profile (accessible on the ```home``` page).
 
 **```Deposit```**\
-Description: Deposit allows users to deposit money into their Venmo balance. To deposit money into their Venmo account, a user must first link a bank and verify their account. If users do not have a bank linked, the deposit page give them option to input a bank temporarily, with the option of making it a default bank.
-![]()
+Description: Deposit allows users to deposit money into their Venmo balance. To deposit money into their Venmo account, a user must first link a bank and verify their account. If users do not have a bank linked, the deposit page give them option to input a bank temporarily, with the option of making it a default bank. 
 
-**```venmo.py unrequest userID paymentID```**\
-Description:
+<img src="https://github.com/SukhmKang/venmo-project/blob/main/Screenshots/Make%20Default.gif" width="500">
 
-**```venmo.py denyrequest senderID paymentID```**\
-Description:
+**```Friends```**\
+Description: Users can send friend requests to other users in the ecosystem. Once a friend request is accepted, both users can pay and request each other and can also see Friends Only transactions from each other in their ```friendLog``` and ```globalLog```. Friends can be selected on the ```social``` page, which auto-populates the ```pay/request``` form with the friend's name.
+
+**```Settings```**\
+Description: On the settings page, the user can 
 
 **```venmo.py friend userID friendID'```**\
 Description:
