@@ -3,7 +3,7 @@
 
 This project recreates several of the core commands present in the Venmo application (https://venmo.com/), while managing a central database of user information and recording transaction histories for users within the payment ecosystem. The purpose of this project was to explore the ways a company like Venmo manages a major database while retrieving information from its databases to perform a multitude of commands in a way that optimizes for efficient runtime and storage.
 
-Visit the fully functional website [here](https://venmoproject.pythonanywhere.com/)!
+**Visit the fully functional website [here](https://venmoproject.pythonanywhere.com/)!**
 
 <img src="https://github.com/SukhmKang/passion-projects/blob/main/Venmo.py%20Image.png" width="350">
 
@@ -81,20 +81,6 @@ Description: The ```requestLog``` displays all of the user's incoming and outgoi
 **```transferLog```**\
 Description: The ```transferLog``` displays all of the user's bank transfers.
 
-## Example Database
-
-### User Database: Users
-
-Here is an example of our users table:
-
-![](https://github.com/SukhmKang/passion-projects/blob/main/Venmo%20Users.db.png)
-
-### Transactions Database: paymentLog
-
-Here is an example of our paymentLog table:
-
-![](https://github.com/SukhmKang/passion-projects/blob/main/Venmo%20paymentLog.db.png)
-
 ## Backend Features
 
 ### Database
@@ -103,6 +89,7 @@ The central database (venmo.db) contains a Users table and a paymentLog table.
 
 **Users**
 
+<img src="https://github.com/SukhmKang/venmo-project/blob/main/Screenshots/users.png" width="500">
 
 **paymentLog**
 
@@ -110,300 +97,23 @@ The central database (venmo.db) contains a Users table and a paymentLog table.
 
 ### Payment Limits
 
+The Venmo app has several payment limits depending on the account type and verification status of the account. Every time a user attempts to makes a payment on our app, the application automatically checks if they have exceeded any payment limits before permitting the transaction.
+
 ### Filtering
-Like all other log commands (```friendLog```, ```personalLog```, ```requestLog```), the ```globalLog``` also allows users to input optional input to filter the data presented in the log. Users have the option to apply (and even stack) any of the following filters: 
+All log commands, ```friendLog```, ```personalLog```, ```requestLog```, ```transferLog```, and ```globalLog```, allow users to input optional filters for the data presented in the log. Users have the option to apply (and even stack) any of the following filters: 
 
-```filters = ["-above","-below","-range","-days","-tags","-sender","-recipient","-message","-messagecontains"]```
+**```above```** filters payments keeping only the transactions that are above a certain payment amount \
+**```below```** filters payments keeping only the transactions that are above a certain payment amount \
+**```range```** filters payments keeping only the transactions with an amount  within a certain interval \
+**```days```** filters payments keeping only the transactions that are within the last n number of days \
+**```daterange```** filters payments within a date range \
+**```tags```** filters payments keeping only the transactions that are "tagged" with a specific tag \
+**```sender```** filters payments keeping only the transactions that are from a specific sender \
+**```recipient```** filters payments keeping only the transactions that are to a specific recipient \
+**```message```** filters payments keeping only the transactions that have a specific payment message \
+**```messagecontaints```** filters payments keeping only the transactions that have a payment message which includes a certain string
 
-**```-above```** filters payments keeping only the transactions that are above a certain payment amount \
-**```-below```** filters payments keeping only the transactions that are above a certain payment amount \
-**```-range```** filters payments keeping only the transactions with an amount  within a certain interval \
-**```-days```** filters payments keeping only the transactions that are within the last n number of days \
-**```-tags```** filters payments keeping only the transactions that are "tagged" with a specific tag \
-**```-sender```** filters payments keeping only the transactions that are from a specific sender \
-**```-recipient```** filters payments keeping only the transactions that are to a specific recipient \
-**```-message```** filters payments keeping only the transactions that have a specific payment message \
-**```-messagecontaints```** filters payments keeping only the transactions that have a payment message which includes a certain string
-
-
-Let's say a user may want to use the -above and -sender filters to specify a payment with an amount above $35 sent by Lupita. 
-
-To do this, the user would input the following command:
-
-**COMMAND:**
-
-```
-python3 venmo.py globallog Lukas -sender Lupita -above 35
-```
-This command will print the new ```globallog``` after applying the specific filters. After the filtering, only one payment remains in the log.
-
-**OUTPUT:**
-```
-======
-LUPITA paid ESTEFANIA $40.00
-Date: 2022-01-05 19:24:25
-Message: quick wing repeat minute matter
-ID: 235882096320024938
-Privacy: Friends Only
-Tag: fun
-======
-```
-
-Users can also use the **```requestlog```** to view incoming and outgoing requests, including their respective request status (ccepted, denied, pending, or cancelled).
-
-**COMMAND:**
-
-```
-python3 venmo.py requestlog ashley -range 20-50
-```
-
-**OUTPUT:**
-```
-===============
-PENDING REQUEST
-KYRA requested $49.00 from ASHLEY
-Date: 2022-01-05 14:47:07
-Message: present forgot choice
-ID: -8828219609105870469
-Tag: food
-===============
-
-===============
-ACCEPTED REQUEST
-MIRANDA accepted ASHLEY's request for $28.00
-Date: 2022-01-05 14:47:07
-Message: visitor ring fed contrast
-ID: -4572332181465126335
-===============
-
-===============
-CANCELLED REQUEST
-ASHLEY cancelled their request for $34.00 from COEN
-Date: 2022-01-05 14:47:07
-Message: smaller
-ID: -6263499498269279458
-Tag: groceries
-===============
-```
-
-Users can also use the **```friendlog```** to see specific transactions involving one of their friends (similar to the transaction history that a user sees on Venmo after clicking on a friend's profile:
-
-**COMMAND:**
-
-```
-python3 venmo.py friendlog eliza -below 40
-```
-
-**OUTPUT:**
-```
-=======
-ELIZA paid MARCELLO $10.00
-Date: 2022-01-05 19:32:37
-Message: expect thick hand tropical
-ID: 646440887148715387
-Privacy: Public
-Tag: food
-=======
-
-=======
-ELIZA paid ALEXA $22.00
-Date: 2022-01-05 19:32:37
-Message: using
-ID: -3226112198171525621
-Privacy: Friends Only
-Tag: sports
-=======
-
-=======
-KAYSEN paid ELIZA $16.00
-Date: 2022-01-05 19:32:37
-Message: already greatest clock character
-ID: 7255611750700585485
-Privacy: Public
-Tag: rent
-=======
-
-=======
-JOVIE paid ELIZA $36.00
-Date: 2022-01-05 19:32:37
-Message: sweet our taken deep base
-ID: -6666593477264811232
-Privacy: Public
-Tag: business
-=======
-
-=======
-FOSTER paid ELIZA $3.00
-Date: 2022-01-05 19:32:37
-Message: shinning court volume
-ID: 8977508245405188969
-Privacy: Public
-Tag: food
-=======
-
-=======
-ELIZA paid LUKAS $3.00
-Date: 2022-01-05 19:32:37
-Message: stepped bridge all boy idea
-ID: 1399052944502408428
-Privacy: Public
-=======
-```
-
-The last log users can access is the **```personallog```** which tracks all of a user's own transactions, including their bank transfers. 
-
-**COMMAND:**
-
-```
-python3 venmo.py personallog lukas
-```
-
-**OUTPUT:**
-```
-=======
-LUKAS paid RAYMOND $4.00
-Date: 2022-01-05 19:39:20
-Message: mine party running rabbit
-ID: 1876582270564654817
-Privacy: Public
-Tag: tickets
-=======
-
-=======
-FLORA paid LUKAS $40.00
-Date: 2022-01-05 19:39:20
-Message: buried
-ID: 8027349983504459532
-Privacy: Friends Only
-Tag: fun
-=======
-
-=======
-LUKAS transferred $888.00 to bank 867410893
-No Fee Transfer
-Date: 2022-01-05 19:38:15
-ID: 1468992921269261560
-=======
-
-=======
-LUKAS paid FOSTER $44.00
-Date: 2022-01-05 19:39:21
-Message: operation
-ID: 2006268989207569363
-Privacy: Public
-Tag: sports
-=======
-
-=======
-LUPITA paid LUKAS $34.00
-Date: 2022-01-05 19:39:21
-Message: broad frequently frozen leg three
-ID: 8873442707971198000
-Privacy: Friends Only
-Tag: drinks
-=======
-
-=======
-LUKAS transferred $798.00 to bank 867410893
-Instant Transfer
-Date: 2022-01-05 19:38:50
-ID: -8942518831985827823
-=======
-
-=======
-CHARLEY paid LUKAS $4.00
-Date: 2022-01-05 19:39:21
-Message: tune
-ID: 5617351941942471040
-Privacy: Private
-Tag: drinks
-=======
-```
-
-If Lukas  wanted to see just the balance transfers made to their bank, they could apply the ```-type``` filter and select to show only transfers. This would log just the two transfers Lukas made.
-
-**COMMAND:**
-
-```
-python3 venmo.py personallog lukas -type transfers
-```
-
-**OUTPUT:**
-```
-=======
-LUKAS transferred $888.00 to bank 867410893
-No Fee Transfer
-Date: 2022-01-05 19:38:15
-ID: 1468992921269261560
-=======
-
-=======
-LUKAS transferred $798.00 to bank 867410893
-Instant Transfer
-Date: 2022-01-05 19:38:50
-ID: -8942518831985827823
-=======
-
-```
-
-### User Profiles
-User profiles showcase several important attributes of a Venmo user, as saved in the ([users.db](#user-database-usersdb)) or calculated from the ([paymentLog.db](#transactions-database-paymentlogdb)). This includes the user's userID, balance, verification status, number of friends, date of account creation, and total fees paid.
-
-**COMMAND:**
-
-```
-python3 venmo.py userprofile ariana
-```
-
-**OUTPUT:**
-```
-==================
-VENMO User Profile
-==================
-@ARIANA - √erified
-$740.90
-67 friends
-joined 2022-01-04
-==================
-```
-
-**COMMAND:**
-
-```
-python3 venmo.py userprofile john
-```
-
-**OUTPUT:**
-```
-==================
-VENMO User Profile
-==================
-@JOHN - unverified
-$2.31
-41 friends
-joined 2022-01-04
-==================
-```
-
-**COMMAND:**
-
-```
-python3 venmo.py userprofile bob
-```
-
-**OUTPUT:**
-```
-==================
-VENMO User Profile
-==================
-@BOB - √erified
-$2506.93
-No friends yet!
-ƒees: $15.00
-joined 2022-01-04
-==================
-```
-
+Certain filters only apply to specific logs; for example, transfers do not have messages and thus cannot be filtered by ```message``` or ```messagecontains```.
 
 ## Authors & Contact Information
 
