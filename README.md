@@ -103,11 +103,10 @@ The central database (venmo.db) contains a Users table and a paymentLog table.
 
 **Users**
 
-<img>
 
 **paymentLog**
 
-<img>
+<img src="https://github.com/SukhmKang/venmo-project/blob/main/Screenshots/paymentLog.png" width="500">
 
 ### Payment Limits
 
