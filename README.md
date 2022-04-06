@@ -100,7 +100,9 @@ The central database (venmo.db) contains a Users table and a paymentLog table.
 
 ### Payment Limits
 
-The Venmo app has several payment limits depending on the account type and verification status of the account. Every time a user attempts to makes a payment on our app, the application automatically checks if they have exceeded any payment limits before permitting the transaction.
+The Venmo app has several payment limits depending on the account type and verification status of the account. Many of the payment limits are spending/receiving limits on a per-week basis. Every time a user attempts to makes a payment on our app, the application automatically checks if they or the recipient have exceeded any payment limits before permitting the transaction.
+
+<img src="https://github.com/SukhmKang/venmo-project/blob/main/Screenshots/Payment%20Limits.png" width="500">
 
 ### Filtering
 All log commands, ```friendLog```, ```personalLog```, ```requestLog```, ```transferLog```, and ```globalLog```, allow users to input optional filters for the data presented in the log. Users have the option to apply (and even stack) any of the following filters: 
