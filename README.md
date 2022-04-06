@@ -116,7 +116,7 @@ All log commands, ```friendLog```, ```personalLog```, ```requestLog```, ```trans
 **```sender```** filters payments keeping only the transactions that are from a specific sender \
 **```recipient```** filters payments keeping only the transactions that are to a specific recipient \
 **```message```** filters payments keeping only the transactions that have a specific payment message \
-**```messagecontaints```** filters payments keeping only the transactions that have a payment message which includes a certain string
+**```messagecontains```** filters payments keeping only the transactions that have a payment message which includes a certain string
 
 Certain filters only apply to specific logs; for example, transfers do not have messages and thus cannot be filtered by ```message``` or ```messagecontains```. Furthermore, requests in the ```requestLog``` can be filtered by whether they were ```accepted```, ```denied```, or ```pending```.
 
