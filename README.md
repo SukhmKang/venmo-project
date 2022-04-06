@@ -23,8 +23,6 @@ Our project enables users to create and operate accounts within a payment enviro
 
 ### Descriptions & Usage
 
-Features:
-
 **```Homepage```**\
 Description: The homepage hosts a variety of core features for the user. The user can see their profile, including their balance and profile picture. On the homepage, the user also has access to previews of all 5 logs offered by the program.
 
