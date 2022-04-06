@@ -105,7 +105,7 @@ The Venmo app has several payment limits depending on the account type and verif
 <img src="https://github.com/SukhmKang/venmo-project/blob/main/Screenshots/Payment%20Limits.png" width="500">
 
 ### Filtering
-All log commands, ```friendLog```, ```personalLog```, ```requestLog```, ```transferLog```, and ```globalLog```, allow users to input optional filters for the data presented in the log. Users have the option to apply (and even stack) any of the following filters: 
+All log commands, ```friendLog```, ```personalLog```, ```requestLog```, ```transferLog```, and ```globalLog```, allow users to input optional filters for the data presented in the log. Users have the option to apply (and stack) any of the following filters with ease: 
 
 **```above```** filters payments keeping only the transactions that are above a certain payment amount \
 **```below```** filters payments keeping only the transactions that are above a certain payment amount \
@@ -118,7 +118,7 @@ All log commands, ```friendLog```, ```personalLog```, ```requestLog```, ```trans
 **```message```** filters payments keeping only the transactions that have a specific payment message \
 **```messagecontaints```** filters payments keeping only the transactions that have a payment message which includes a certain string
 
-Certain filters only apply to specific logs; for example, transfers do not have messages and thus cannot be filtered by ```message``` or ```messagecontains```.
+Certain filters only apply to specific logs; for example, transfers do not have messages and thus cannot be filtered by ```message``` or ```messagecontains```. Furthermore, requests in the ```requestLog``` can be filtered by whether they were ```accepted```, ```denied```, or ```pending```.
 
 ## Authors & Contact Information
 
