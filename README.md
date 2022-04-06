@@ -29,7 +29,7 @@ Description: Users can create an account on the registration page. Users are sub
 <img src="https://github.com/SukhmKang/venmo-project/blob/main/Screenshots/ezgif.com-gif-maker.gif" width="500">
 
 **```Homepage```**\
-Description: The homepage hosts a variety of core features for the user. The user can see their profile, including their balance and profile picture. On the homepage, the user also has access to previews of all 5 logs offered by the program. The user can navigate to the ```Deposit```, ```Pay or Request```, and ```Transfer``` pages directly from the profile card.
+Description: The homepage hosts a variety of core features for the user. The user can see their profile, including their balance and profile picture. On the homepage, the user also has access to previews of all 5 logs offered by the program. The user can navigate to the ```Deposit```, ```Pay or Request```, ```Transfer```, ```Settings```, and ```Notifications``` pages directly from the profile card.
 
 <img src="https://github.com/SukhmKang/venmo-project/blob/main/Screenshots/Homepage.png" width="500">
 
