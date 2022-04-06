@@ -23,6 +23,11 @@ Our project enables users to create and operate accounts within a payment enviro
 
 ### Descriptions & Usage
 
+**```Account Creation```**\
+Description: Users can create an account on the registration page. Users are subject to username and password length and content requirements, which the page dynamically reminds the user of. Once the user fulfills all requirements, the ```Confirm``` button becomes enabled and the user can register.
+
+<img src="https://github.com/SukhmKang/venmo-project/blob/main/Screenshots/ezgif.com-gif-maker.gif" width="500">
+
 **```Homepage```**\
 Description: The homepage hosts a variety of core features for the user. The user can see their profile, including their balance and profile picture. On the homepage, the user also has access to previews of all 5 logs offered by the program. The user can navigate to the ```Deposit```, ```Pay or Request```, and ```Transfer``` pages directly from the profile card.
 
