@@ -60,6 +60,11 @@ Description: On the settings page, the user can ```verify``` their account, ```l
 
 <img src="https://github.com/SukhmKang/venmo-project/blob/main/Screenshots/Settings.png" width="500">
 
+**```Verification```**\
+Description: As mentioned before, users can ```verify``` their account from the ```Settings``` page. Verification is crucial to the payment ecosystem, as users who have not verified their account cannot make ```Transfers``` and are subject to stricter weekly payment limits than verified users.
+
+<img src="https://github.com/SukhmKang/venmo-project/blob/main/Screenshots/Verification.png" width="500">
+
 **```personalLog```**\
 Description: The ```personalLog``` displays payments directly involving the user and bank transfers. For the ```personalLog``` as well as the rest of the logs, the user can apply a variety of filters so that the log only shows the payments that the user wants to see.
 
