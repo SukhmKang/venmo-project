@@ -63,7 +63,7 @@ Description: Deposit allows users to deposit money into their Venmo balance. To 
 **```Settings```**\
 Description: On the settings page, the user can ```verify``` their account, ```link``` a bank, set a ```default privacy```, and change their ```password```.
 
-<img src="https://github.com/SukhmKang/venmo-project/blob/main/Screenshots/Settings.png" width="500">
+<img src="https://github.com/SukhmKang/venmo-project/blob/main/Screenshots/IMG_8265.jpg" width="500">
 
 **```Verification```**\
 Description: As mentioned before, users can ```verify``` their account from the ```Settings``` page. Verification is crucial to the payment ecosystem, as users who have not verified their account cannot make ```Transfers``` and are subject to stricter weekly payment limits than verified users.
