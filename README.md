@@ -5,7 +5,7 @@ This project recreates several of the core commands present in the Venmo applica
 
 **Visit the fully functional website [here](https://venmoproject.pythonanywhere.com/)!**
 
-<img src="https://github.com/SukhmKang/passion-projects/blob/main/Venmo.py%20Image.png" width="350">
+
 
 ## Built With
 
@@ -50,7 +50,7 @@ Description: Users can send friend requests to other users in the ecosystem. Onc
 **```Accepting and Rejecting Requests```**\
 Description: On the requests page (accessible by clicking the notification bell on the ```home``` page), users can accept incoming payment requests and friend requests.
 
-<img src="https://github.com/SukhmKang/venmo-project/blob/main/Screenshots/Accept:Deny%20Requests.png" width="500">
+<img src="https://github.com/SukhmKang/venmo-project/blob/main/Screenshots/requestspage.png" width="500">
 
 **```Bank Transfers```**\
 Description: Transfers allows a user to transfer money out of their Venmo balance and into their bank account. Just like in Venmo, users have two options when initiating a transfer: "instant" and "no fee." Transfers are viewable in a user's ```personalLog``` and ```transferLog``` and fees paid are tracked on a user's profile (accessible on the ```home``` page).
