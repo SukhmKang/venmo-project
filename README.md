@@ -29,7 +29,7 @@ Description: Users can create an account on the registration page. Users are sub
 <img src="https://github.com/SukhmKang/venmo-project/blob/main/Screenshots/ezgif.com-gif-maker.gif" width="500">
 
 **```Homepage```**\
-Description: The homepage hosts a variety of core features for the user. The user can see their profile, including their balance and profile picture. On the homepage, the user also has access to previews of all 5 logs offered by the program. The user can navigate to the ```Deposit```, ```Pay or Request```, ```Transfer```, ```Settings```, and ```Notifications``` pages directly from the profile card.
+Description: The homepage hosts a variety of core features for the user. The user can view their profile, including their balance and profile picture. On the homepage, the user also has access to previews of all 5 logs offered by the program. The user can navigate to the ```Deposit```, ```Pay or Request```, ```Transfer```, ```Settings```, and ```Notifications``` pages directly from the profile card.
 
 <img src="https://github.com/SukhmKang/venmo-project/blob/main/Screenshots/Homepage.png" width="500">
 
@@ -107,13 +107,13 @@ The central database (venmo.db) contains a Users table and a paymentLog table.
 
 The Venmo app has several payment limits depending on the account type and verification status of the account. Many of the payment limits are spending/receiving limits on a per-week basis. Every time a user attempts to makes a payment on our app, the application automatically checks if they or the recipient have exceeded any payment limits before permitting the transaction.
 
-<img src="https://github.com/SukhmKang/venmo-project/blob/main/Screenshots/Payment%20Limits.png" width="500">
+<img src="https://github.com/SukhmKang/venmo-project/blob/main/Screenshots/paymentlimits.png" width="200">
 
 ### Filtering
 All log commands, ```friendLog```, ```personalLog```, ```requestLog```, ```transferLog```, and ```globalLog```, allow users to input optional filters for the data presented in the log. Users have the option to apply (and stack) any of the following filters with ease: 
 
 **```above```** filters payments keeping only the transactions that are above a certain payment amount \
-**```below```** filters payments keeping only the transactions that are above a certain payment amount \
+**```below```** filters payments keeping only the transactions that are below a certain payment amount \
 **```range```** filters payments keeping only the transactions with an amount  within a certain interval \
 **```days```** filters payments keeping only the transactions that are within the last n number of days \
 **```daterange```** filters payments within a date range \
